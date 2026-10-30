@@ -153,6 +153,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
         // CameraX OverlayEffect reads this live snapshot while encoding each frame
         cameraManager.telemetryProvider = { telemetry.value }
+        cameraManager.languageProvider = { _language.value }
         cameraManager.speedUnitLabelProvider = { _settings.value.speedUnit.label }
         cameraManager.overlayConfigProvider = { _overlayConfig.value }
         cameraManager.videoProfileLabelProvider = {
