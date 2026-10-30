@@ -737,7 +737,7 @@ class CameraRecordingManager(private val context: Context) {
         val fileName = "CAMRIDERPRO_$timeStamp.mp4"
         val storageDisplayPath = "0://Movies/Camriderpro/$fileName"
 
-        // Ensure Movies/RiderCam directory exists
+        // Ensure Movies/Camriderpro directory exists
         try {
             val moviesDir = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
@@ -747,7 +747,7 @@ class CameraRecordingManager(private val context: Context) {
                 moviesDir.mkdirs()
             }
         } catch (e: Exception) {
-            Log.w("CameraRecordingManager", "Could not create Movies/RiderCam directory", e)
+            Log.w("CameraRecordingManager", "Could not create Movies/Camriderpro directory", e)
         }
 
         val contentValues = ContentValues().apply {
