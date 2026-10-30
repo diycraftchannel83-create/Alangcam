@@ -523,6 +523,11 @@ class CameraRecordingManager(private val context: Context) {
             }
             drawText(item.first, margin + 12f * scale, slotY + 12f * scale, 11f, muted, true)
             drawText(item.second, margin + 12f * scale, slotY + 28f * scale, 13.5f, valColor, true)
+            // Match the live preview: show the calendar date directly beneath the clock.
+            // This is part of the TIME field and remains inside its existing telemetry slot.
+            if (idx == 0 && overlayConfigProvider?.invoke()?.showDateTime != false) {
+                drawText(dateFormatted, margin + 12f * scale, slotY + 39f * scale, 9f, muted, false)
+            }
             if (item.third.isNotEmpty()) {
                 drawText(item.third, margin + telemWidth - 12f * scale, slotY + 28f * scale, 10f, white, false, Paint.Align.RIGHT)
             }
