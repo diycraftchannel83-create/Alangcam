@@ -61,13 +61,13 @@ class TelemetryVideoExporter(private val context: Context) {
             _exportState.value = ExportState.Exporting(5)
 
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val outputFileName = "RIDER_CAM_OVERLAY_$timeStamp.mp4"
-            val displayPath = "0://Movies/RiderCam/$outputFileName"
+            val outputFileName = "CAMRIDERPRO_OVERLAY_$timeStamp.mp4"
+            val displayPath = "0://Movies/Camriderpro/$outputFileName"
 
-            // Target destination file in internal storage 0://Movies/RiderCam/
+            // Target destination file in internal storage 0://Movies/Camriderpro/
             val moviesDir = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
-                "RiderCam"
+                "Camriderpro"
             )
             if (!moviesDir.exists()) moviesDir.mkdirs()
 
