@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Height
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.TrendingUp
@@ -120,27 +118,6 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "WAKTU", "TIME"),
                 value = timePart,
                 subText = datePart,
-                accentColor = HudWhite
-            )
-
-            HorizontalDivider()
-
-            if (overlayConfig.showCoordinates) {
-                VerticalStatItem(
-                    icon = Icons.Default.LocationOn,
-                    label = uiText(language, "KOORDINAT", "COORDINATES"),
-                    value = String.format(Locale.US, "%.4f°", telemetry.latitude),
-                    subText = String.format(Locale.US, "%.4f°", telemetry.longitude),
-                    accentColor = NeonCyan
-                )
-                HorizontalDivider()
-            }
-
-            VerticalStatItem(
-                icon = Icons.Default.Height,
-                label = uiText(language, "ELEVASI", "ALTITUDE"),
-                value = "${telemetry.altitudeMeters.toInt()} M",
-                subText = if (telemetry.isGpsFixed) "GPS LOCK" else "NO FIX",
                 accentColor = HudWhite
             )
 
