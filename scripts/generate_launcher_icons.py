@@ -4,16 +4,13 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "CamRider PRO_ Racing Lens Icon.png"
-if not SOURCE.is_file():
-    SOURCE = ROOT / "app" / "src" / "main" / "assets" / "CamRider PRO_ Racing Lens Icon.png"
+SOURCE = ROOT / "CamRider.png"
 RES = ROOT / "app" / "src" / "main" / "res"
 
 if not SOURCE.is_file() or SOURCE.stat().st_size < 1024:
     raise SystemExit(
-        "CamRider PRO launcher PNG is missing or empty. "
-        "Add the supplied 512x512 PNG at repository root as "
-        "'CamRider PRO_ Racing Lens Icon.png' before building."
+        "CamRider.png launcher PNG is missing or empty. "
+        "Ensure the repository contains the supplied CamRider.png file."
     )
 
 image = Image.open(SOURCE).convert("RGBA")
@@ -46,4 +43,4 @@ foreground.alpha_composite(art, ((size-344)//2, (size-344)//2))
 out = RES / "drawable-nodpi"
 out.mkdir(parents=True, exist_ok=True)
 foreground.save(out / "ic_launcher_art.png", optimize=True)
-print("Generated CamRider PRO launcher icons for all Android densities.")
+print("Generated CamRiderPro launcher icons from CamRider.png for all Android densities.")
