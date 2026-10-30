@@ -16,6 +16,8 @@ on:
       - '**.xml'
       - 'gradle/**'
       - '.github/workflows/build-apk.yml'
+      - 'CamRider PRO_ Racing Lens Icon.png'
+      - 'scripts/generate_launcher_icons.py'
 
 permissions:
   contents: read
@@ -39,6 +41,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Generate launcher icons from CamRider PRO artwork
+        run: |
+          python3 -m pip install --user Pillow
+          python3 scripts/generate_launcher_icons.py
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
