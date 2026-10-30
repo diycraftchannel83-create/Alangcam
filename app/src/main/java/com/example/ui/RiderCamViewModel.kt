@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class RiderCamViewModel(application: Application) : AndroidViewModel(application) {
+class CamRiderProViewModel(application: Application) : AndroidViewModel(application) {
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
@@ -140,7 +140,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 // Short delay ensures AudioRecord stream is established without interference
                 viewModelScope.launch {
                     kotlinx.coroutines.delay(1200)
-                    speak("Welcome to RiderCam. Happy travelling and enjoy your ride!")
+                    speak("Welcome to CamRiderPro. Happy travelling and enjoy your ride!")
                 }
             }
             wasRecording = recording
