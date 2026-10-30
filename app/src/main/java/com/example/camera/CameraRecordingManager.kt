@@ -459,34 +459,7 @@ class CameraRecordingManager(private val context: Context) {
         drawText(videoProfileLabelProvider?.invoke() ?: "1080p 60FPS H.265",
             techPill.centerX(), techTop + 20f * scale, 11.5f, white, true, Paint.Align.CENTER)
 
-        // GPS compass / route radar is anchored to the upper-right corner.
-        val compassRadius = 55f * scale
-        val compassCx = w - margin - compassRadius - 8f * scale
-        val compassCy = top + headerHeight + 14f * scale + compassRadius
-
-        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.argb(230, 6, 12, 20) })
-        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(borderPaint).apply { color = cyan; strokeWidth = 1.8f * scale })
-        canvas.drawCircle(compassCx, compassCy, compassRadius * 0.65f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = AndroidColor.argb(70, 0, 240, 255); style = Paint.Style.STROKE; strokeWidth = 1.0f * scale
-        })
-
-        val bearingRad = Math.toRadians(telemetry.bearingDegrees.toDouble())
-        canvas.drawLine(
-            compassCx,
-            compassCy,
-            compassCx + kotlin.math.sin(bearingRad).toFloat() * compassRadius * 0.72f,
-            compassCy - kotlin.math.cos(bearingRad).toFloat() * compassRadius * 0.72f,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = green
-                strokeWidth = 4.5f * scale
-                strokeCap = Paint.Cap.ROUND
-                setShadowLayer(7f * scale, 0f, 0f, green)
-            }
-        )
-        drawText("N", compassCx, compassCy - compassRadius + 16f * scale, 14f, red, true, Paint.Align.CENTER)
-        drawText("S", compassCx, compassCy + compassRadius - 6f * scale, 11f, white, true, Paint.Align.CENTER)
-        drawText("W", compassCx - compassRadius + 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
-        drawText("E", compassCx + compassRadius - 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
+        // Compass HUD intentionally omitted from recorded video.
 
         // Telemetry dock remains on the left, below the GPS/video-profile stack.
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
@@ -612,53 +585,39 @@ class CameraRecordingManager(private val context: Context) {
             }
         }
 
-        // Thick Neon Yellow Needle (High-visibility rider cockpit styling)
+        // Short perimeter needle follows the outside of the scale; no center spindle.
         val needleAngle = Math.toRadians(135.0 + 270.0 * speed / 200f)
-        val tipX = cx + kotlin.math.cos(needleAngle).toFloat() * radius * 0.78f
-        val tipY = cy + kotlin.math.sin(needleAngle).toFloat() * radius * 0.78f
-        val tailX = cx - kotlin.math.cos(needleAngle).toFloat() * radius * 0.16f
-        val tailY = cy - kotlin.math.sin(needleAngle).toFloat() * radius * 0.16f
-
-        // 1. Outer Yellow Needle Glow
-        canvas.drawLine(tailX, tailY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = AndroidColor.argb(130, 255, 214, 0)
-            strokeWidth = 20f * scale
+        val baseRadius = radius * 0.94f
+        val tipRadius = radius * 0.68f
+        val baseX = cx + kotlin.math.cos(needleAngle).toFloat() * baseRadius
+        val baseY = cy + kotlin.math.sin(needleAngle).toFloat() * baseRadius
+        val tipX = cx + kotlin.math.cos(needleAngle).toFloat() * tipRadius
+        val tipY = cy + kotlin.math.sin(needleAngle).toFloat() * tipRadius
+        canvas.drawLine(baseX, baseY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = AndroidColor.argb(105, 255, 214, 0)
+            strokeWidth = 13f * scale
             strokeCap = Paint.Cap.ROUND
         })
-        // 2. Thick Yellow Needle Core
-        canvas.drawLine(tailX, tailY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        canvas.drawLine(baseX, baseY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = yellow
-            strokeWidth = 9.0f * scale
+            strokeWidth = 5.5f * scale
             strokeCap = Paint.Cap.ROUND
-            setShadowLayer(8f * scale, 0f, 0f, yellow)
+            setShadowLayer(7f * scale, 0f, 0f, yellow)
         })
-        // 3. Central bright highlight
-        canvas.drawLine(tailX, tailY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        canvas.drawLine(baseX, baseY, tipX, tipY, Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = AndroidColor.rgb(255, 255, 230)
-            strokeWidth = 2.6f * scale
+            strokeWidth = 1.8f * scale
             strokeCap = Paint.Cap.ROUND
         })
 
-        // Center Hub with bold Yellow Accent Rim
-        canvas.drawCircle(cx, cy, 16f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.rgb(8, 14, 22) })
-        canvas.drawCircle(cx, cy, 16f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = yellow; style = Paint.Style.STROKE; strokeWidth = 3.5f * scale; setShadowLayer(8f * scale, 0f, 0f, yellow)
-        })
-        canvas.drawCircle(cx, cy, 5f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = white })
+        // Digital speed is centered in the dial; no central pivot graphic.
+        drawText(speed.toInt().toString(), cx, cy + 12f * scale, 39f, white, true, Paint.Align.CENTER)
+        drawText(unit.uppercase(Locale.ROOT), cx, cy + 32f * scale, 11f, cyan, true, Paint.Align.CENTER)
 
-        // Digital Speed Readout positioned UNDER manual speedometer gauge
         val digitalY = cy + radius + 10f * scale
-        val badgeW = 68f * scale
-        val badgeH = 20f * scale
-        drawPanel(RectF(cx - badgeW / 2f, digitalY, cx + badgeW / 2f, digitalY + badgeH), 5f, cyan)
-        drawText(unit.uppercase(Locale.ROOT), cx, digitalY + 14.5f * scale, 11f, cyan, true, Paint.Align.CENTER)
-
-        // Digital Speed Numbers underneath the manual gauge
-        drawText(speed.toInt().toString(), cx, digitalY + 50f * scale, 42f, white, true, Paint.Align.CENTER)
-
         val gearStr = if (telemetry.gear.isNotEmpty() && telemetry.gear != "--") "GEAR ${telemetry.gear} • ${telemetry.rpm} RPM" else "GEAR / RPM --"
         if (config?.showGearRpm != false) {
-            drawText(gearStr, cx, digitalY + 70f * scale, 11.5f, green, true, Paint.Align.CENTER)
+            drawText(gearStr, cx, digitalY + 15f * scale, 11.5f, green, true, Paint.Align.CENTER)
         }
         }
 
