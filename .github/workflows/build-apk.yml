@@ -14,9 +14,9 @@ on:
       - '**.gradle.kts'
       - '**.kt'
       - '**.xml'
+      - '**.png'
       - 'gradle/**'
       - '.github/workflows/build-apk.yml'
-      - 'app/src/main/assets/CamRider PRO_ Racing Lens Icon.png'
       - 'scripts/generate_launcher_icons.py'
 
 permissions:
@@ -31,28 +31,24 @@ jobs:
     name: Build debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Generate launcher icons from CamRider PRO artwork
+      - name: Generate launcher icons from CamRider.png
         run: |
           python3 -m pip install Pillow
           python3 scripts/generate_launcher_icons.py
           test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
-
+          test -s app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-
       - name: Generate CI debug keystore
         run: |
           keytool -genkeypair -v \
@@ -64,10 +60,20 @@ jobs:
             -keysize 2048 \
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
-
       - name: Build debug APK
         run: gradle --no-daemon --no-configuration-cache :app:assembleDebug
-
+      - name: Verify launcher icon is packaged
+        run: |
+          python3 -m pip install androguard
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          apk = next(Path("app/build/outputs/apk/debug").glob("*.apk"))
+          with ZipFile(apk) as z:
+              names = z.namelist()
+              assert any("ic_launcher" in n for n in names), "Launcher icon resources missing from APK"
+          print(f"Verified launcher resources in {apk}")
+          PY
       - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
