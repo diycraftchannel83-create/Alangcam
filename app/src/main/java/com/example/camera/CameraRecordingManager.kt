@@ -425,38 +425,70 @@ class CameraRecordingManager(private val context: Context) {
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = red; setShadowLayer(10f * scale, 0f, 0f, red) })
         drawText("● REC VIDEO", margin + 38f * scale, top + 34f * scale, 15f, red, true)
 
-        // Right Info Panel (GPS Sat, Battery) - Top
+        // GPS + battery stack directly beneath the recording status pill.
         val rightWidth = 240f * scale
-        val rightPanel = RectF(w - margin - rightWidth, top, w - margin, top + headerHeight)
+        val gpsPanelTop = top + headerHeight + 5f * scale
+        val rightPanel = RectF(margin, gpsPanelTop, margin + rightWidth, gpsPanelTop + 38f * scale)
         val gpsColor = if (telemetry.isGpsFixed) green else yellow
-        drawPanel(rightPanel, 16f, gpsColor)
+        drawPanel(rightPanel, 12f, gpsColor)
 
-        // GPS Icon & status
         val gpsLabel = if (telemetry.isGpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS..."
-        canvas.drawCircle(rightPanel.left + 18f * scale, top + 27f * scale, 6f * scale,
+        canvas.drawCircle(rightPanel.left + 18f * scale, gpsPanelTop + 19f * scale, 6f * scale,
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gpsColor; setShadowLayer(8f * scale, 0f, 0f, gpsColor) })
-        drawText(gpsLabel, rightPanel.left + 28f * scale, top + 34f * scale, 11.5f, gpsColor, true)
+        drawText(gpsLabel, rightPanel.left + 30f * scale, gpsPanelTop + 24f * scale, 11.5f, gpsColor, true)
 
-        // Battery
+        // Battery stays on the same GPS row, aligned to the far right.
         val battery = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
         val level = battery?.getIntExtra("level", -1) ?: -1
         val batteryScale = battery?.getIntExtra("scale", 100) ?: 100
         val batteryText = if (level >= 0 && batteryScale > 0) "${level * 100 / batteryScale}%" else "100%"
-        val bx = rightPanel.left + 165f * scale
-        val by = top + 17f * scale
+        val bx = rightPanel.right - 62f * scale
+        val by = gpsPanelTop + 9f * scale
         val batteryOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green; style = Paint.Style.STROKE; strokeWidth = 2.2f * scale }
-        canvas.drawRoundRect(RectF(bx, by, bx + 24f * scale, by + 19f * scale), 4f * scale, 4f * scale, batteryOutline)
-        canvas.drawRect(bx + 24f * scale, by + 6f * scale, bx + 28f * scale, by + 13f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
-        val fill = (level.coerceIn(0, 100) / 100f) * 18f
-        canvas.drawRect(bx + 3f * scale, by + 3f * scale, bx + (3f + fill) * scale, by + 16f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
-        drawText(batteryText, bx + 34f * scale, top + 34f * scale, 11.5f, green, true)
+        canvas.drawRoundRect(RectF(bx, by, bx + 20f * scale, by + 18f * scale), 4f * scale, 4f * scale, batteryOutline)
+        canvas.drawRect(bx + 20f * scale, by + 5f * scale, bx + 24f * scale, by + 12f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
+        val fill = (level.coerceIn(0, 100) / 100f) * 14f
+        canvas.drawRect(bx + 3f * scale, by + 3f * scale, bx + (3f + fill) * scale, by + 15f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
+        drawText(batteryText, bx + 29f * scale, gpsPanelTop + 24f * scale, 10.5f, green, true)
 
-        // Right Info Panel (Keterangan Rekaman 1080p directly under Searching GPS with identical column width)
+        // Video resolution / frame-rate indicator directly beneath GPS + battery.
         val techHeight = 30f * scale
-        val techPill = RectF(w - margin - rightWidth, top + headerHeight + 5f * scale, w - margin, top + headerHeight + 5f * scale + techHeight)
+        val techTop = gpsPanelTop + 43f * scale
+        val techPill = RectF(margin, techTop, margin + rightWidth, techTop + techHeight)
         drawPanel(techPill, 8f, cyan)
-        drawText(videoProfileLabelProvider?.invoke() ?: "1080p 60FPS H.265", rightPanel.centerX(), top + headerHeight + 24f * scale, 11.5f, white, true, Paint.Align.CENTER)
+        drawText(videoProfileLabelProvider?.invoke() ?: "1080p 60FPS H.265",
+            techPill.centerX(), techTop + 20f * scale, 11.5f, white, true, Paint.Align.CENTER)
 
+        // GPS compass / route radar is anchored to the upper-right corner.
+        val compassRadius = 55f * scale
+        val compassCx = w - margin - compassRadius - 8f * scale
+        val compassCy = top + headerHeight + 14f * scale + compassRadius
+
+        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.argb(230, 6, 12, 20) })
+        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(borderPaint).apply { color = cyan; strokeWidth = 1.8f * scale })
+        canvas.drawCircle(compassCx, compassCy, compassRadius * 0.65f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = AndroidColor.argb(70, 0, 240, 255); style = Paint.Style.STROKE; strokeWidth = 1.0f * scale
+        })
+
+        val bearingRad = Math.toRadians(telemetry.bearingDegrees.toDouble())
+        canvas.drawLine(
+            compassCx,
+            compassCy,
+            compassCx + kotlin.math.sin(bearingRad).toFloat() * compassRadius * 0.72f,
+            compassCy - kotlin.math.cos(bearingRad).toFloat() * compassRadius * 0.72f,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = green
+                strokeWidth = 4.5f * scale
+                strokeCap = Paint.Cap.ROUND
+                setShadowLayer(7f * scale, 0f, 0f, green)
+            }
+        )
+        drawText("N", compassCx, compassCy - compassRadius + 16f * scale, 14f, red, true, Paint.Align.CENTER)
+        drawText("S", compassCx, compassCy + compassRadius - 6f * scale, 11f, white, true, Paint.Align.CENTER)
+        drawText("W", compassCx - compassRadius + 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
+        drawText("E", compassCx + compassRadius - 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
+
+        // Telemetry dock remains on the left, below the GPS/video-profile stack.
         // LAYER 2: Left Side - Simple Circular Compass (Elevated, without outer rectangular box)
         val compassRadius = 55f * scale
         val compassCx = margin + compassRadius + 8f * scale
@@ -487,7 +519,7 @@ class CameraRecordingManager(private val context: Context) {
         drawText("E", compassCx + compassRadius - 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
 
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
-        val telemTop = compassCy + compassRadius + 14f * scale
+        val telemTop = techTop + techHeight + 12f * scale
         val telemWidth = 175f * scale
         val telemHeight = 280f * scale
         val telemRect = RectF(margin, telemTop, margin + telemWidth, telemTop + telemHeight)
