@@ -289,7 +289,8 @@ fun CameraRiderScreen(
                 TelemetryVideoBannerOverlay(
                     telemetry = telemetry,
                     speedUnit = settings.speedUnit,
-                    overlayConfig = overlayConfig
+                    overlayConfig = overlayConfig,
+                    language = language
                 )
             }
 
@@ -509,7 +510,8 @@ fun CameraRiderScreen(
         // 4. Handlebar Screen Lock Overlay (Touch Protection against rain & vibration)
         ScreenLockOverlay(
             isLocked = isScreenLocked,
-            onUnlock = { viewModel.unlockScreen() }
+            onUnlock = { viewModel.unlockScreen() },
+            language = language
         )
 
         // 5. Settings Dialog
@@ -561,6 +563,7 @@ fun CameraRiderScreen(
             RideHistoryDialog(
                 rides = rides,
                 speedUnit = settings.speedUnit,
+                language = language,
                 onDeleteRide = { viewModel.deleteRide(it) },
                 onDismiss = { showHistoryDialog = false }
             )
