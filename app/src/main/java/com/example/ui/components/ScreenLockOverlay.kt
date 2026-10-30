@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.HudMuted
@@ -45,7 +46,8 @@ import com.example.ui.theme.NeonYellow
 @Composable
 fun ScreenLockOverlay(
     isLocked: Boolean,
-    onUnlock: () -> Unit
+    onUnlock: () -> Unit,
+    language: String = "id"
 ) {
     AnimatedVisibility(
         visible = isLocked,
@@ -93,7 +95,7 @@ fun ScreenLockOverlay(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "LAYAR TERKUNCI (HANDLEBAR GUARD)",
+                    text = uiText(language, "LAYAR TERKUNCI (HANDLEBAR GUARD)", "SCREEN LOCKED (HANDLEBAR GUARD)"),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Black,
                     color = HudWhite,
@@ -101,7 +103,7 @@ fun ScreenLockOverlay(
                 )
 
                 Text(
-                    text = "Sentuhan dikunci agar air hujan / getaran tidak mengganggu",
+                    text = uiText(language, "Sentuhan dikunci agar air hujan / getaran tidak mengganggu", "Touch is disabled to prevent rain or vibration from interrupting operation"),
                     fontSize = 11.sp,
                     color = HudMuted,
                     modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
@@ -118,12 +120,12 @@ fun ScreenLockOverlay(
                 ) {
                     Icon(
                         imageVector = Icons.Default.LockOpen,
-                        contentDescription = "Buka Kunci",
+                        contentDescription = uiText(language, "Buka Kunci", "Unlock"),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.size(6.dp))
                     Text(
-                        text = "BUKA KUNCI LAYAR",
+                        text = uiText(language, "BUKA KUNCI LAYAR", "UNLOCK SCREEN"),
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
