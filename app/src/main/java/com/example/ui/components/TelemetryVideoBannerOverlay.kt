@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.GpsTelemetry
 import com.example.data.model.OverlayConfig
 import com.example.data.model.SpeedUnit
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCard
@@ -62,7 +63,8 @@ fun TelemetryVideoBannerOverlay(
     telemetry: GpsTelemetry,
     speedUnit: SpeedUnit,
     overlayConfig: OverlayConfig,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    language: String = "id"
 ) {
     var timePart by remember {
         mutableStateOf(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date()))
@@ -117,7 +119,7 @@ fun TelemetryVideoBannerOverlay(
             // 1. WAKTU
             VerticalStatItem(
                 icon = Icons.Default.CalendarToday,
-                label = "WAKTU",
+                label = uiText(language, "WAKTU", "TIME"),
                 value = timePart,
                 subText = datePart,
                 accentColor = HudWhite
@@ -129,7 +131,7 @@ fun TelemetryVideoBannerOverlay(
             if (overlayConfig.showCoordinates) {
                 VerticalStatItem(
                     icon = Icons.Default.LocationOn,
-                    label = "KOORDINAT",
+                    label = uiText(language, "KOORDINAT", "COORDINATES"),
                     value = String.format(Locale.US, "%.4f°", telemetry.latitude),
                     subText = String.format(Locale.US, "%.4f°", telemetry.longitude),
                     accentColor = NeonCyan
@@ -141,7 +143,7 @@ fun TelemetryVideoBannerOverlay(
             // 3. ELEVASI
             VerticalStatItem(
                 icon = Icons.Default.Height,
-                label = "ELEVASI",
+                label = uiText(language, "ELEVASI", "ALTITUDE"),
                 value = "${telemetry.altitudeMeters.toInt()} M",
                 subText = if (telemetry.isGpsFixed) "GPS LOCK" else "NO FIX",
                 accentColor = HudWhite
@@ -152,9 +154,9 @@ fun TelemetryVideoBannerOverlay(
             // 4. JARAK
             VerticalStatItem(
                 icon = Icons.Default.Straighten,
-                label = "JARAK",
+                label = uiText(language, "JARAK", "DISTANCE"),
                 value = String.format(Locale.US, "%.2f KM", telemetry.distanceKm),
-                subText = "TOTAL TRIP",
+                subText = uiText(language, "TOTAL PERJALANAN", "TOTAL TRIP"),
                 accentColor = NeonYellow
             )
 
@@ -165,7 +167,7 @@ fun TelemetryVideoBannerOverlay(
                 icon = Icons.Default.Speed,
                 label = "TOP SPEED",
                 value = "$max ${speedUnit.label.uppercase()}",
-                subText = "PEAK RECORD",
+                subText = uiText(language, "REKOR TERTINGGI", "PEAK RECORD"),
                 accentColor = NeonAmber
             )
 
@@ -174,7 +176,7 @@ fun TelemetryVideoBannerOverlay(
             // 6. RATA-RATA
             VerticalStatItem(
                 icon = Icons.Default.TrendingUp,
-                label = "RATA-RATA",
+                label = uiText(language, "RATA-RATA", "AVERAGE"),
                 value = "$avg ${speedUnit.label.uppercase()}",
                 subText = "AVG SPEED",
                 accentColor = NeonGreen
