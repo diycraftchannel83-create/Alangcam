@@ -43,6 +43,10 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
     private val _isScreenLocked = MutableStateFlow(false)
     val isScreenLocked: StateFlow<Boolean> = _isScreenLocked.asStateFlow()
 
+    private val prefs = application.getSharedPreferences("camriderpro_preferences", android.content.Context.MODE_PRIVATE)
+    private val _language = MutableStateFlow(prefs.getString("language", "id") ?: "id")
+    val language: StateFlow<String> = _language.asStateFlow()
+
     private val _settings = MutableStateFlow(RecordingSettings())
     val settings: StateFlow<RecordingSettings> = _settings.asStateFlow()
 
@@ -214,6 +218,12 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     fun unlockScreen() {
         _isScreenLocked.value = false
+    }
+
+    fun setLanguage(languageCode: String) {
+        val normalized = if (languageCode == "en") "en" else "id"
+        _language.value = normalized
+        prefs.edit().putString("language", normalized).apply()
     }
 
     fun updateSettings(newSettings: RecordingSettings) {
