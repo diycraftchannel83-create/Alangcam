@@ -106,7 +106,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                         Log.e("CamRiderVoice", "TTS playback failed ($errorCode): $utteranceId")
                     }
                 })
-                val result = voiceTts?.setLanguage(Locale.US)
+                val result = voiceTts?.setLanguage(if (_language.value == "id") Locale("id", "ID") else Locale.US)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     voiceTts?.setLanguage(Locale.getDefault())
                 }
@@ -131,7 +131,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 // Announce that exact configured threshold so the spoken value always
                 // matches the number shown in Settings (not the fluctuating GPS speed).
                 val configuredLimitKmh = prefs.speedLimitKmh
-                speak("Speed limit is set to $configuredLimitKmh kilometers per hour. Please slow down.")
+                speak(if (_language.value == "id") "Batas kecepatan diatur pada $configuredLimitKmh kilometer per jam. Mohon kurangi kecepatan." else "Speed limit is set to $configuredLimitKmh kilometers per hour. Please slow down.")
             }
         }.launchIn(viewModelScope)
 
@@ -140,7 +140,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 // Short delay ensures AudioRecord stream is established without interference
                 viewModelScope.launch {
                     kotlinx.coroutines.delay(1200)
-                    speak("Welcome to CamRiderPro. Happy travelling and enjoy your ride!")
+                    speak(if (_language.value == "id") "Selamat datang di CamRiderPro. Selamat berkendara dan nikmati perjalanan Anda!" else "Welcome to CamRiderPro. Happy travelling and enjoy your ride!")
                 }
             }
             wasRecording = recording
@@ -170,7 +170,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun updateBannerForMissingAudioPermission() {
-        _bannerMessage.value = "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio."
+        _bannerMessage.value = if (_language.value == "id") "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio." else "Microphone permission denied. Video will be recorded without audio."
     }
 
     fun startGpsTracking() {
@@ -182,29 +182,29 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             // Freeze trip metrics at the user's stop action; encoder finalization is asynchronous.
             recordingTelemetrySnapshot = telemetry.value
             cameraManager.stopRecording()
-            _bannerMessage.value = "Perekaman selesai & tersimpan otomatis"
+            _bannerMessage.value = if (_language.value == "id") "Perekaman selesai & tersimpan otomatis" else "Recording completed and saved automatically"
         } else {
             // Every manual recording starts with a clean trip accumulator.
             gpsTracker.resetTrip()
             recordingTelemetrySnapshot = null
             cameraManager.startRecording(_settings.value.audioEnabled)
-            _bannerMessage.value = "Perekaman manual dimulai"
+            _bannerMessage.value = if (_language.value == "id") "Perekaman manual dimulai" else "Manual recording started"
         }
     }
 
     fun toggleAudio() {
         val updated = !_settings.value.audioEnabled
         _settings.value = _settings.value.copy(audioEnabled = updated)
-        _bannerMessage.value = if (updated) "Audio mikrofon diaktifkan" else "Audio mikrofon dimatikan"
+        _bannerMessage.value = if (updated) if (_language.value == "id") "Audio mikrofon diaktifkan" else "Microphone audio enabled" else if (_language.value == "id") "Audio mikrofon dimatikan" else "Microphone audio disabled"
     }
 
     fun toggleNightBoost() {
         cameraManager.toggleNightMode()
         _settings.value = _settings.value.copy(nightModeEnabled = cameraManager.isNightBoostActive.value)
         _bannerMessage.value = if (cameraManager.isNightBoostActive.value) {
-            "Mode Malam Aktif: Kompensasi eksposur ditingkatkan"
+            if (_language.value == "id") "Mode Malam Aktif: Kompensasi eksposur ditingkatkan" else "Night Mode Active: Exposure compensation increased"
         } else {
-            "Mode Normal"
+            if (_language.value == "id") "Mode Normal" else "Normal Mode"
         }
     }
 
@@ -224,6 +224,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         val normalized = if (languageCode == "en") "en" else "id"
         _language.value = normalized
         prefs.edit().putString("language", normalized).apply()
+        voiceTts?.setLanguage(if (normalized == "id") Locale("id", "ID") else Locale.US)
     }
 
     fun updateSettings(newSettings: RecordingSettings) {
@@ -246,9 +247,9 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         val nextLock = !_overlayConfig.value.isSpeedometerLocked
         _overlayConfig.value = _overlayConfig.value.copy(isSpeedometerLocked = nextLock)
         _bannerMessage.value = if (nextLock) {
-            "Posisi spedometer dikunci (Aman dari sentuhan)"
+            if (_language.value == "id") "Posisi spedometer dikunci (Aman dari sentuhan)" else "Speedometer position locked (touch protected)"
         } else {
-            "Mode Geser Aktif: Sentuh & geser spedometer ke posisi mana saja"
+            if (_language.value == "id") "Mode Geser Aktif: Sentuh & geser spedometer ke posisi mana saja" else "Move Mode Active: Touch and drag the speedometer anywhere"
         }
     }
 
@@ -280,12 +281,12 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         if (gpsTracker.isSimulationActive()) {
             gpsTracker.stopSimulation()
             _isSimulating.value = false
-            _bannerMessage.value = "Simulasi dimatikan: GPS asli aktif"
+            _bannerMessage.value = if (_language.value == "id") "Simulasi dimatikan: GPS asli aktif" else "Simulation disabled: Real GPS is active"
         } else {
             gpsTracker.resetTrip()
             gpsTracker.startRideSimulation()
             _isSimulating.value = true
-            _bannerMessage.value = "Simulasi perjalanan motor aktif!"
+            _bannerMessage.value = if (_language.value == "id") "Simulasi perjalanan motor aktif!" else "Motorcycle ride simulation active!"
         }
     }
 
@@ -308,7 +309,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                     file.delete()
                 }
             }
-            _bannerMessage.value = "Rekaman perjalanan dihapus"
+            _bannerMessage.value = if (_language.value == "id") "Rekaman perjalanan dihapus" else "Ride recording deleted"
         }
     }
 
@@ -319,7 +320,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             val dateStr = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date())
 
             val session = RideSession(
-                title = "Perjalanan Motor $dateStr",
+                title = if (_language.value == "id") "Perjalanan Motor $dateStr" else "Motorcycle Ride $dateStr",
                 videoPath = videoUri,
                 timestamp = System.currentTimeMillis(),
                 durationSeconds = durationSeconds.coerceAtLeast(1L),
@@ -336,13 +337,13 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             val rideId = rideDao.insertRide(RideEntity.fromRideSession(session))
             val savedSession = session.copy(id = rideId)
             // HUD is already burned into each encoded frame by CameraX OverlayEffect.
-            _bannerMessage.value = "Rekaman tersimpan dengan HUD speedometer langsung di video"
+            _bannerMessage.value = if (_language.value == "id") "Rekaman tersimpan dengan HUD speedometer langsung di video" else "Recording saved with the speedometer HUD embedded in the video"
         }
     }
 
     fun exportVideoWithSpeedometer(session: RideSession) {
         viewModelScope.launch {
-            _bannerMessage.value = "Mengekspor video dengan overlay spedometer..."
+            _bannerMessage.value = if (_language.value == "id") "Mengekspor video dengan overlay spedometer..." else "Exporting video with speedometer overlay..."
             videoExporter.exportVideoWithSpeedometerOverlay(session, _settings.value.speedUnit)
         }
     }
