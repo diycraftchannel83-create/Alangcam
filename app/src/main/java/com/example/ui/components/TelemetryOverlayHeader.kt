@@ -108,7 +108,7 @@ fun TelemetryOverlayHeader(
     Column(
         modifier = modifier
             .width(210.dp)
-            .padding(start = 14.dp, top = 8.dp),
+            .padding(top = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.Start
     ) {
