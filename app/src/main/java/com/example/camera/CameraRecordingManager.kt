@@ -248,22 +248,25 @@ class CameraRecordingManager(private val context: Context) {
 
                                 hudRenderHandler.post {
                                     try {
-                                        backBuffer?.let { b ->
-                                            b.eraseColor(AndroidColor.TRANSPARENT)
-                                            val rasterCanvas = Canvas(b)
-                                            rasterCanvas.scale(bitmapScale, bitmapScale)
-                                            drawLiveHud(
-                                                canvas = rasterCanvas,
-                                                telemetry = telemetry,
-                                                unit = unit,
-                                                cropRect = crop,
-                                                rotationDegrees = rotation
-                                            )
-                                            synchronized(hudBitmapLock) {
-                                                activeFrontBitmap = b
+                                        synchronized(hudBitmapLock) {
+                                            val target = backBuffer
+                                            if (target != null && !target.isRecycled &&
+                                                (target === bufferA || target === bufferB)
+                                            ) {
+                                                target.eraseColor(AndroidColor.TRANSPARENT)
+                                                val rasterCanvas = Canvas(target)
+                                                rasterCanvas.scale(bitmapScale, bitmapScale)
+                                                drawLiveHud(
+                                                    canvas = rasterCanvas,
+                                                    telemetry = telemetry,
+                                                    unit = unit,
+                                                    cropRect = crop,
+                                                    rotationDegrees = rotation
+                                                )
+                                                activeFrontBitmap = target
                                                 cachedHudLastRenderMs = SystemClock.elapsedRealtime()
-                                                hudRenderPending = false
                                             }
+                                            hudRenderPending = false
                                         }
                                     } catch (e: Throwable) {
                                         Log.e("CameraRecordingManager", "HUD render failed", e)
