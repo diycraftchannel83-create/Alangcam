@@ -49,6 +49,7 @@ import com.example.data.model.OverlayConfig
 import com.example.data.model.RecordingSettings
 import com.example.data.model.SpeedUnit
 import com.example.data.model.VideoResolution
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCard
@@ -101,7 +102,7 @@ fun SettingsDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "PENGATURAN RIDERCAM",
+                            text = uiText(language, "PENGATURAN RIDERCAM", "CAMRIDER SETTINGS"),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Black,
                             color = HudWhite
@@ -145,7 +146,7 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Section 1: Simulasi / Demo Mode
-                SettingsSectionHeader("SIMULASI PENGUJIAN DESK/EMULATOR", Icons.Default.DirectionsBike)
+                SettingsSectionHeader(uiText(language, "SIMULASI PENGUJIAN DESK/EMULATOR", "DESK/EMULATOR TEST SIMULATION"), Icons.Default.DirectionsBike)
                 SettingsCard {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -154,13 +155,13 @@ fun SettingsDialog(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Simulasi Perjalanan Motor",
+                                text = uiText(language, "Simulasi Perjalanan Motor", "Motorcycle Ride Simulation"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = HudWhite
                             )
                             Text(
-                                text = "Simulasikan kecepatan motor, akselerasi, gigi & GPS tanpa harus mengendarai motor nyata",
+                                text = uiText(language, "Simulasikan kecepatan motor, akselerasi, gigi & GPS tanpa harus mengendarai motor nyata", "Simulate motorcycle speed, acceleration, gear and GPS without riding a real motorcycle"),
                                 fontSize = 11.sp,
                                 color = HudMuted
                             )
@@ -180,10 +181,10 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Section 2: Video & Manual Record
-                SettingsSectionHeader("PENGATURAN REKAMAN", Icons.Default.Videocam)
+                SettingsSectionHeader(uiText(language, "PENGATURAN REKAMAN", "RECORDING SETTINGS"), Icons.Default.Videocam)
                 SettingsCard {
                     Text(
-                        text = "Resolusi Video",
+                        text = uiText(language, "Resolusi Video", "Video Resolution"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = HudWhite
@@ -218,7 +219,7 @@ fun SettingsDialog(
 
                     // Frame rate
                     Text(
-                        text = "Frame Rate Target",
+                        text = uiText(language, "Frame Rate Target", "Target Frame Rate"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = HudWhite
@@ -251,7 +252,7 @@ fun SettingsDialog(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     Text(
-                        text = "Satuan Kecepatan",
+                        text = uiText(language, "Satuan Kecepatan", "Speed Unit"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = HudWhite
@@ -284,7 +285,7 @@ fun SettingsDialog(
 
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "VOICE ASSISTANT",
+                        text = uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = NeonGreen
@@ -303,7 +304,7 @@ fun SettingsDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Batas Kecepatan", fontSize = 12.sp, color = HudWhite)
+                        Text(uiText(language, "Batas Kecepatan", "Speed Limit"), fontSize = 12.sp, color = HudWhite)
                         Text("${settings.speedLimitKmh} km/h", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NeonGreen)
                     }
                     Slider(
@@ -315,7 +316,7 @@ fun SettingsDialog(
                         colors = SliderDefaults.colors(thumbColor = NeonGreen, activeTrackColor = NeonGreen)
                     )
                     Text(
-                        text = "Jeda pengulangan peringatan: ${settings.alertRepeatSeconds} detik",
+                        text = uiText(language, "Jeda pengulangan peringatan: ${settings.alertRepeatSeconds} detik", "Alert repeat interval: ${settings.alertRepeatSeconds} seconds"),
                         fontSize = 10.sp,
                         color = HudMuted
                     )
@@ -386,7 +387,7 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Section 4: Overlay & Tampilan
-                SettingsSectionHeader("OVERLAY & TAMPILAN", Icons.Default.Visibility)
+                SettingsSectionHeader(uiText(language, "OVERLAY & TAMPILAN", "OVERLAY & DISPLAY"), Icons.Default.Visibility)
                 SettingsCard {
                     OverlayToggleItem("Kecepatan Digital (Speedometer)", overlayConfig.showSpeedometer) {
                         onOverlayConfigChange(overlayConfig.copy(showSpeedometer = it))
@@ -403,13 +404,13 @@ fun SettingsDialog(
                     OverlayToggleItem("Tanggal & Waktu Real-Time", overlayConfig.showDateTime) {
                         onOverlayConfigChange(overlayConfig.copy(showDateTime = it))
                     }
-                    OverlayToggleItem("Watermark Logo RiderCam", overlayConfig.showWatermark) {
+                    OverlayToggleItem(uiText(language, "Watermark Logo RiderCam", "RiderCam Logo Watermark"), overlayConfig.showWatermark) {
                         onOverlayConfigChange(overlayConfig.copy(showWatermark = it))
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "POSISI SPEDOMETER & REKAMAN",
+                        text = uiText(language, "POSISI SPEDOMETER & REKAMAN", "SPEEDOMETER & RECORDING POSITION"),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = NeonGreen
@@ -458,7 +459,7 @@ fun SettingsDialog(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     OverlayToggleItem(
-                        "Kunci Posisi Spedometer",
+                        uiText(language, "Kunci Posisi Spedometer", "Lock Speedometer Position"),
                         overlayConfig.isSpeedometerLocked
                     ) {
                         onOverlayConfigChange(overlayConfig.copy(isSpeedometerLocked = it))
