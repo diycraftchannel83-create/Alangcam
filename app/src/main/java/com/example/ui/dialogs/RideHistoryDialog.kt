@@ -55,6 +55,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import com.example.data.model.RideSession
 import com.example.data.model.SpeedUnit
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCard
@@ -74,6 +75,7 @@ import java.util.Locale
 fun RideHistoryDialog(
     rides: List<RideSession>,
     speedUnit: SpeedUnit = SpeedUnit.KMH,
+    language: String = "id",
     onDeleteRide: (RideSession) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -109,7 +111,7 @@ fun RideHistoryDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "DATA & ANALISIS PERFORMA",
+                            text = uiText(language, "DATA & ANALISIS PERFORMA", "RIDE DATA & PERFORMANCE"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Black,
                             color = HudWhite
@@ -175,7 +177,7 @@ fun RideHistoryDialog(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Tutup Pemutar", fontSize = 11.sp)
+                            Text(uiText(language, "Tutup Pemutar", "Close Player"), fontSize = 11.sp)
                         }
                     }
                 }
@@ -198,13 +200,13 @@ fun RideHistoryDialog(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Belum ada rekaman perjalanan",
+                                text = uiText(language, "Belum ada rekaman perjalanan", "No ride recordings yet"),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = HudWhite
                             )
                             Text(
-                                text = "Tersimpan otomatis di 0://Movies/Camriderpro/",
+                                text = uiText(language, "Tersimpan otomatis di 0://Movies/Camriderpro/", "Automatically saved to 0://Movies/Camriderpro/"),
                                 fontSize = 11.sp,
                                 color = HudMuted
                             )
@@ -245,7 +247,7 @@ fun RideHistoryDialog(
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                         context.startActivity(
-                                            Intent.createChooser(shareIntent, "Bagikan Video CamRiderPro")
+                                            Intent.createChooser(shareIntent, uiText(language, "Bagikan Video CamRiderPro", "Share CamRiderPro Video"))
                                         )
                                     } catch (_: Exception) {
                                     }
@@ -340,8 +342,8 @@ private fun RideSessionItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                MetricItem("DURASI", durationText, NeonGreen)
-                MetricItem("JARAK", String.format("%.1f km", ride.distanceKm), HudWhite)
+                MetricItem(uiText(language, "DURASI", "DURATION"), durationText, NeonGreen)
+                MetricItem(uiText(language, "JARAK", "DISTANCE"), String.format("%.1f km", ride.distanceKm), HudWhite)
                 MetricItem("MAX", String.format(Locale.getDefault(), "%.0f %s", ride.maxSpeedKmh * speedUnit.multiplierFromKmh, speedUnit.label), NeonYellow)
                 MetricItem("AVG", String.format(Locale.getDefault(), "%.0f %s", ride.avgSpeedKmh * speedUnit.multiplierFromKmh, speedUnit.label), NeonCyan)
             }
@@ -366,7 +368,7 @@ private fun RideSessionItem(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Putar Video", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(uiText(language, "Putar Video", "Play Video"), fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
