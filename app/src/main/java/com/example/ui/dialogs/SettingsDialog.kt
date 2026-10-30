@@ -67,6 +67,8 @@ fun SettingsDialog(
     onSettingsChange: (RecordingSettings) -> Unit,
     onOverlayConfigChange: (OverlayConfig) -> Unit,
     onToggleSimulation: () -> Unit,
+    language: String,
+    onLanguageChange: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -118,6 +120,29 @@ fun SettingsDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Language preference
+                SettingsSectionHeader(if (language == "id") "BAHASA APLIKASI" else "APP LANGUAGE", Icons.Default.Settings)
+                SettingsCard {
+                    Text(if (language == "id") "Pilih Bahasa" else "Choose Language", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                        listOf("id" to "Indonesia", "en" to "English").forEach { (code, label) ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(if (language == code) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
+                                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
+                                    .clickable { onLanguageChange(code) }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (language == code) Color.Black else HudWhite)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Section 1: Simulasi / Demo Mode
                 SettingsSectionHeader("SIMULASI PENGUJIAN DESK/EMULATOR", Icons.Default.DirectionsBike)
@@ -316,7 +341,7 @@ fun SettingsDialog(
                         color = HudMuted
                     )
                     Text(
-                        text = "0://Movies/RiderCam/ (Memori Internal)",
+                        text = "0://Movies/Camriderpro/ (Internal Storage)",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = NeonCyan,
