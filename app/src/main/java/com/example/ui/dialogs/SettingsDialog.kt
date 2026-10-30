@@ -290,13 +290,13 @@ fun SettingsDialog(
                         fontWeight = FontWeight.Bold,
                         color = NeonGreen
                     )
-                    OverlayToggleItem("Voice Assistant", settings.voiceAssistantEnabled) {
+                    OverlayToggleItem(uiText(language, "Asisten Suara", "Voice Assistant"), settings.voiceAssistantEnabled) {
                         onSettingsChange(settings.copy(voiceAssistantEnabled = it))
                     }
-                    OverlayToggleItem("Speed Limit Voice Alert", settings.speedLimitAlertEnabled) {
+                    OverlayToggleItem(uiText(language, "Peringatan Suara Batas Kecepatan", "Speed Limit Voice Alert"), settings.speedLimitAlertEnabled) {
                         onSettingsChange(settings.copy(speedLimitAlertEnabled = it))
                     }
-                    OverlayToggleItem("Welcome Voice saat mulai REC", settings.welcomeVoiceEnabled) {
+                    OverlayToggleItem(uiText(language, "Suara Sambutan saat Mulai Rekam", "Welcome Voice on Recording Start"), settings.welcomeVoiceEnabled) {
                         onSettingsChange(settings.copy(welcomeVoiceEnabled = it))
                     }
                     Row(
@@ -336,7 +336,7 @@ fun SettingsDialog(
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Lokasi Penyimpanan Video:",
+                        text = uiText(language, "Lokasi Penyimpanan Video:", "Video Storage Location:"),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = HudMuted
@@ -353,7 +353,7 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Section 3: Mode Malam
-                SettingsSectionHeader("MODE MALAM (LOW LIGHT BOOST)", Icons.Default.Nightlight)
+                SettingsSectionHeader(uiText(language, "MODE MALAM (PENINGKATAN CAHAYA RENDAH)", "NIGHT MODE (LOW LIGHT BOOST)"), Icons.Default.Nightlight)
                 SettingsCard {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -362,13 +362,13 @@ fun SettingsDialog(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Tingkatkan Kualitas Malam",
+                                text = uiText(language, "Tingkatkan Kualitas Malam", "Enhance Night Quality"),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = HudWhite
                             )
                             Text(
-                                text = "Kompensasi eksposur tinggi untuk rekaman malam lebih terang dan jernih",
+                                text = uiText(language, "Kompensasi eksposur tinggi untuk rekaman malam lebih terang dan jernih", "Increases exposure compensation for brighter, clearer night recordings"),
                                 fontSize = 10.sp,
                                 color = HudMuted
                             )
@@ -389,19 +389,19 @@ fun SettingsDialog(
                 // Section 4: Overlay & Tampilan
                 SettingsSectionHeader(uiText(language, "OVERLAY & TAMPILAN", "OVERLAY & DISPLAY"), Icons.Default.Visibility)
                 SettingsCard {
-                    OverlayToggleItem("Kecepatan Digital (Speedometer)", overlayConfig.showSpeedometer) {
+                    OverlayToggleItem(uiText(language, "Kecepatan Digital (Speedometer)", "Digital Speedometer"), overlayConfig.showSpeedometer) {
                         onOverlayConfigChange(overlayConfig.copy(showSpeedometer = it))
                     }
-                    OverlayToggleItem("Peta GPS & Rute Radar", overlayConfig.showGpsMap) {
+                    OverlayToggleItem(uiText(language, "Peta GPS & Rute Radar", "GPS Map & Route Radar"), overlayConfig.showGpsMap) {
                         onOverlayConfigChange(overlayConfig.copy(showGpsMap = it))
                     }
-                    OverlayToggleItem("Koordinat GPS & Ketinggian", overlayConfig.showCoordinates) {
+                    OverlayToggleItem(uiText(language, "Koordinat GPS & Ketinggian", "GPS Coordinates & Altitude"), overlayConfig.showCoordinates) {
                         onOverlayConfigChange(overlayConfig.copy(showCoordinates = it))
                     }
-                    OverlayToggleItem("Data Gear / RPM (OBD-II)", overlayConfig.showGearRpm) {
+                    OverlayToggleItem(uiText(language, "Data Gear / RPM (OBD-II)", "Gear / RPM Data (OBD-II)"), overlayConfig.showGearRpm) {
                         onOverlayConfigChange(overlayConfig.copy(showGearRpm = it))
                     }
-                    OverlayToggleItem("Tanggal & Waktu Real-Time", overlayConfig.showDateTime) {
+                    OverlayToggleItem(uiText(language, "Tanggal & Waktu Real-Time", "Real-Time Date & Time"), overlayConfig.showDateTime) {
                         onOverlayConfigChange(overlayConfig.copy(showDateTime = it))
                     }
                     OverlayToggleItem(uiText(language, "Watermark Logo RiderCam", "RiderCam Logo Watermark"), overlayConfig.showWatermark) {
@@ -416,7 +416,7 @@ fun SettingsDialog(
                         color = NeonGreen
                     )
                     Text(
-                        text = "Pilih preset atau geser langsung di layar. Posisi pada video rekaman otomatis sama persis.",
+                        text = uiText(language, "Pilih preset atau geser langsung di layar. Posisi pada video rekaman otomatis sama persis.", "Choose a preset or drag it directly on screen. The recording position will match exactly."),
                         fontSize = 11.sp,
                         color = HudMuted,
                         modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
@@ -427,9 +427,9 @@ fun SettingsDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         val presets = listOf(
-                            Triple("KANAN", 0.65f, 0.38f),
-                            Triple("TENGAH", 0.50f, 0.38f),
-                            Triple("KANAN ATAS", 0.68f, 0.26f)
+                            Triple(uiText(language, "KANAN", "RIGHT"), 0.65f, 0.38f),
+                            Triple(uiText(language, "TENGAH", "CENTER"), 0.50f, 0.38f),
+                            Triple(uiText(language, "KANAN ATAS", "TOP RIGHT"), 0.68f, 0.26f)
                         )
                         presets.forEach { (label, x, y) ->
                             val isSelected = kotlin.math.abs(overlayConfig.speedometerXRatio - x) < 0.06f &&
