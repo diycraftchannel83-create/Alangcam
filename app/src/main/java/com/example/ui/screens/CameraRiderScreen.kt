@@ -277,7 +277,7 @@ fun CameraRiderScreen(
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = if (isLandscape) 52.dp else 56.dp, start = 12.dp),
+                    .padding(top = if (isLandscape) 108.dp else 116.dp, start = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TelemetryVideoBannerOverlay(
