@@ -273,24 +273,28 @@ fun CameraRiderScreen(
                 modifier = Modifier.align(Alignment.TopCenter)
             )
 
-            // Left-Side Vertical Telemetry & Navigation Stack (leaves bottom empty)
+            // Left-side telemetry dock stays below the stacked status / GPS / video-profile header.
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(top = if (isLandscape) 52.dp else 56.dp, start = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (overlayConfig.showGpsMap) {
-                    CompassMiniMapHud(
-                        telemetry = telemetry
-                    )
-                }
-
                 TelemetryVideoBannerOverlay(
                     telemetry = telemetry,
                     speedUnit = settings.speedUnit,
                     overlayConfig = overlayConfig,
                     language = language
+                )
+            }
+
+            // GPS compass / route radar is consistently anchored to the upper-right in portrait and landscape.
+            if (overlayConfig.showGpsMap) {
+                CompassMiniMapHud(
+                    telemetry = telemetry,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = if (isLandscape) 54.dp else 58.dp, end = 14.dp)
                 )
             }
 
