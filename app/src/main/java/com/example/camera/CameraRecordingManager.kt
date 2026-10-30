@@ -80,6 +80,8 @@ class CameraRecordingManager(private val context: Context) {
 
     /** Supplies the latest GPS values to the encoder-side HUD for every video frame. */
     var telemetryProvider: (() -> GpsTelemetry)? = null
+    /** Current UI language used for the encoder-burned HUD. */
+    var languageProvider: (() -> String)? = null
     var speedUnitLabelProvider: (() -> String)? = null
     var videoProfileLabelProvider: (() -> String)? = null
     var overlayConfigProvider: (() -> OverlayConfig)? = null
@@ -245,6 +247,7 @@ class CameraRecordingManager(private val context: Context) {
                                 val rotation = frame.rotationDegrees
                                 val telemetry = telemetryProvider?.invoke() ?: GpsTelemetry()
                                 val unit = speedUnitLabelProvider?.invoke() ?: "km/h"
+                                val language = languageProvider?.invoke() ?: "id"
 
                                 hudRenderHandler.post {
                                     try {
@@ -260,6 +263,7 @@ class CameraRecordingManager(private val context: Context) {
                                                     canvas = rasterCanvas,
                                                     telemetry = telemetry,
                                                     unit = unit,
+                                                    language = language,
                                                     cropRect = crop,
                                                     rotationDegrees = rotation
                                                 )
@@ -337,6 +341,7 @@ class CameraRecordingManager(private val context: Context) {
         canvas: Canvas,
         telemetry: GpsTelemetry,
         unit: String,
+        language: String,
         cropRect: android.graphics.Rect,
         rotationDegrees: Int
     ) {
@@ -498,12 +503,12 @@ class CameraRecordingManager(private val context: Context) {
         val avgFormatted = "${(telemetry.avgSpeedKmh * unitMultiplier).toInt()} $unit"
 
         val telemItems = listOf(
-            Triple("WAKTU", timeFormatted, ""),
-            Triple("KOORDINAT", coordFormatted, ""),
-            Triple("ELEVASI", altFormatted, if (telemetry.isGpsFixed) "FIX" else "--"),
-            Triple("JARAK", distFormatted, ""),
+            Triple(if (language == "en") "TIME" else "WAKTU", timeFormatted, ""),
+            Triple(if (language == "en") "COORDINATES" else "KOORDINAT", coordFormatted, ""),
+            Triple(if (language == "en") "ALTITUDE" else "ELEVASI", altFormatted, if (telemetry.isGpsFixed) "FIX" else "--"),
+            Triple(if (language == "en") "DISTANCE" else "JARAK", distFormatted, ""),
             Triple("TOP SPEED", maxFormatted, ""),
-            Triple("RATA-RATA", avgFormatted, "")
+            Triple(if (language == "en") "AVERAGE" else "RATA-RATA", avgFormatted, "")
         )
 
         val slotHeight = (telemHeight - 16f * scale) / telemItems.size
