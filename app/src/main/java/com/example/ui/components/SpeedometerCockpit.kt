@@ -88,9 +88,14 @@ fun SpeedometerCockpit(
                     if (major) {
                         val nr=r-32f
                         val c=when { tickSpeed>=160 -> android.graphics.Color.rgb(255,42,85); tickSpeed>=100 -> android.graphics.Color.rgb(255,214,0); else -> android.graphics.Color.rgb(0,240,255) }
-                        val p=AndroidPaint().apply { isAntiAlias=true; color=c; textSize=size.minDimension*.052f
-                            textAlign=AndroidPaint.Align.CENTER; typeface=Typeface.create(Typeface.MONOSPACE,Typeface.BOLD)
-                            setShadowLayer(4f,0f,0f,c) }
+                        val p=AndroidPaint().apply {
+                            isAntiAlias = true
+                            setColor(c)
+                            setTextSize(size.minDimension*.052f)
+                            textAlign = AndroidPaint.Align.CENTER
+                            typeface = Typeface.create(Typeface.MONOSPACE,Typeface.BOLD)
+                            setShadowLayer(4f,0f,0f,c)
+                        }
                         drawContext.canvas.nativeCanvas.drawText(tickSpeed.toString(),
                             cx+cos(angle).toFloat()*nr,cy+sin(angle).toFloat()*nr+p.textSize*.35f,p)
                     }
