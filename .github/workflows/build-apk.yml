@@ -16,7 +16,7 @@ on:
       - '**.xml'
       - 'gradle/**'
       - '.github/workflows/build-apk.yml'
-      - 'CamRider PRO_ Racing Lens Icon.png'
+      - 'app/src/main/assets/CamRider PRO_ Racing Lens Icon.png'
       - 'scripts/generate_launcher_icons.py'
 
 permissions:
