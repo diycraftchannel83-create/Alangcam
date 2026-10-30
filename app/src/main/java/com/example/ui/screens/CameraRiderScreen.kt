@@ -128,28 +128,63 @@ fun CameraRiderScreen(
     var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
     var isCameraBound by remember { mutableStateOf(false) }
 
-    // Permissions check & request
-    val hasCameraPerm = remember(context) {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-    }
-    val hasLocPerm = remember(context) {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    }
-    var permissionsGranted by remember { mutableStateOf(hasCameraPerm && hasLocPerm) }
+    // Re-check permissions whenever the screen resumes; users may change them in Settings.
+    var permissionsGranted by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
-        val cameraOk = results[Manifest.permission.CAMERA] == true
-        val locationOk = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        val cameraOk = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+        val locationOk = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        val audioRequired = results[Manifest.permission.RECORD_AUDIO] == true ||
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
         permissionsGranted = cameraOk && locationOk
-        if (permissionsGranted && !isCameraBound) {
-            isCameraBound = true
+        if (permissionsGranted) {
             viewModel.startGpsTracking()
             previewViewRef?.let { pv ->
-                viewModel.cameraManager.bindCamera(lifecycleOwner, pv, settings.resolution)
+                if (!isCameraBound) {
+                    isCameraBound = true
+                    viewModel.cameraManager.bindCamera(lifecycleOwner, pv, settings.resolution)
+                }
+            }
+        } else {
+            isCameraBound = false
+        }
+        if (!audioRequired) {
+            viewModel.updateBannerForMissingAudioPermission()
+        }
+    }
+
+    val lifecycleState = lifecycleOwner.lifecycle.currentState
+    LaunchedEffect(lifecycleOwner, lifecycleState) {
+        if (lifecycleState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+            val cameraOk = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+            val locationOk = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+
+            permissionsGranted = cameraOk && locationOk
+            if (permissionsGranted && !isCameraBound) {
+                viewModel.startGpsTracking()
+                previewViewRef?.let { pv ->
+                    isCameraBound = true
+                    viewModel.cameraManager.bindCamera(lifecycleOwner, pv, settings.resolution)
+                }
             }
         }
     }
