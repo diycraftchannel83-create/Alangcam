@@ -44,8 +44,9 @@ jobs:
 
       - name: Generate launcher icons from CamRider PRO artwork
         run: |
-          python3 -m pip install --user Pillow
+          python3 -m pip install Pillow
           python3 scripts/generate_launcher_icons.py
+          test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
