@@ -223,6 +223,7 @@ fun RideHistoryDialog(
                             RideSessionItem(
                                 ride = ride,
                                 speedUnit = speedUnit,
+                                language = language,
                                 onPlay = { selectedVideoForPlayback = ride },
                                 onDelete = { onDeleteRide(ride) },
                                 onShare = {
@@ -265,6 +266,7 @@ fun RideHistoryDialog(
 private fun RideSessionItem(
     ride: RideSession,
     speedUnit: SpeedUnit,
+    language: String,
     onPlay: () -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit
