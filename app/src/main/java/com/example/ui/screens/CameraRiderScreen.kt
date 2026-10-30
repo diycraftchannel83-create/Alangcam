@@ -270,7 +270,9 @@ fun CameraRiderScreen(
                 settings = settings,
                 telemetry = telemetry,
                 isNightBoostActive = isNightBoostActive,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 12.dp)
             )
 
             // Left-side telemetry dock stays below the stacked status / GPS / video-profile header.
