@@ -68,6 +68,11 @@ jobs:
         run: |
           keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
 
+      - name: Generate launcher icons from CamRider PRO artwork
+        run: |
+          python3 -m pip install --user Pillow
+          python3 scripts/generate_launcher_icons.py
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
