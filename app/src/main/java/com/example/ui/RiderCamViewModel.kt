@@ -165,6 +165,10 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun updateBannerForMissingAudioPermission() {
+        _bannerMessage.value = "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio."
+    }
+
     fun startGpsTracking() {
         gpsTracker.startTracking()
     }
