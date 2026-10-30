@@ -218,8 +218,8 @@ class CameraRecordingManager(private val context: Context) {
                         // Double-buffering without runtime GC allocations
                         synchronized(hudBitmapLock) {
                             val bitmapScale = when {
-                                maxOf(frameWidth, frameHeight) >= 3000 -> 0.65f
-                                maxOf(frameWidth, frameHeight) >= 1800 -> 0.85f
+                                maxOf(frameWidth, frameHeight) >= 3000 -> 1.00f
+                                maxOf(frameWidth, frameHeight) >= 1800 -> 1.00f
                                 else -> 1.00f
                             }
                             val targetW = (frameWidth * bitmapScale).toInt().coerceAtLeast(1)
@@ -726,7 +726,7 @@ class CameraRecordingManager(private val context: Context) {
         // Acquire WakeLock so recording is never suspended or interrupted
         try {
             val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RiderCam:RecordingWakeLock")?.apply {
+            wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "CamRiderPro:RecordingWakeLock")?.apply {
                 acquire(4 * 3600 * 1000L) // 4 hours maximum timeout
             }
         } catch (e: Exception) {
@@ -734,14 +734,14 @@ class CameraRecordingManager(private val context: Context) {
         }
 
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val fileName = "RIDER_CAM_$timeStamp.mp4"
-        val storageDisplayPath = "0://Movies/RiderCam/$fileName"
+        val fileName = "CAMRIDERPRO_$timeStamp.mp4"
+        val storageDisplayPath = "0://Movies/Camriderpro/$fileName"
 
         // Ensure Movies/RiderCam directory exists
         try {
             val moviesDir = File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
-                "RiderCam"
+                "Camriderpro"
             )
             if (!moviesDir.exists()) {
                 moviesDir.mkdirs()
@@ -753,7 +753,7 @@ class CameraRecordingManager(private val context: Context) {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/RiderCam")
+            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/Camriderpro")
         }
 
         val outputOptions = MediaStoreOutputOptions.Builder(
