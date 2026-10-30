@@ -43,7 +43,6 @@ import com.example.data.model.OverlayConfig
 import com.example.data.model.SpeedUnit
 import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
-import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCard
 import com.example.ui.theme.HudMuted
 import com.example.ui.theme.HudWhite
@@ -85,10 +84,10 @@ fun TelemetryVideoBannerOverlay(
     val max = (telemetry.maxSpeedKmh * speedUnit.multiplierFromKmh).toInt()
     val avg = (telemetry.avgSpeedKmh * speedUnit.multiplierFromKmh).toInt()
 
-    // Vertical Left-Side Telemetry Dock (compact width to minimize screen footprint)
+    // Narrow vertical telemetry dock to preserve more camera view.
     Box(
         modifier = modifier
-            .width(120.dp)
+            .width(104.dp)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -96,10 +95,10 @@ fun TelemetryVideoBannerOverlay(
                         CockpitCard.copy(alpha = 0.92f)
                     )
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             )
             .border(
-                width = 1.2.dp,
+                width = 1.dp,
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         NeonCyan.copy(alpha = 0.60f),
@@ -107,16 +106,15 @@ fun TelemetryVideoBannerOverlay(
                         NeonCyan.copy(alpha = 0.60f)
                     )
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(14.dp)
             )
-            .padding(horizontal = 7.dp, vertical = 6.dp)
+            .padding(horizontal = 5.dp, vertical = 5.dp)
             .testTag("telemetry_video_banner")
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
-            // 1. WAKTU
             VerticalStatItem(
                 icon = Icons.Default.CalendarToday,
                 label = uiText(language, "WAKTU", "TIME"),
@@ -127,7 +125,6 @@ fun TelemetryVideoBannerOverlay(
 
             HorizontalDivider()
 
-            // 2. KOORDINAT
             if (overlayConfig.showCoordinates) {
                 VerticalStatItem(
                     icon = Icons.Default.LocationOn,
@@ -136,11 +133,9 @@ fun TelemetryVideoBannerOverlay(
                     subText = String.format(Locale.US, "%.4f°", telemetry.longitude),
                     accentColor = NeonCyan
                 )
-
                 HorizontalDivider()
             }
 
-            // 3. ELEVASI
             VerticalStatItem(
                 icon = Icons.Default.Height,
                 label = uiText(language, "ELEVASI", "ALTITUDE"),
@@ -151,7 +146,6 @@ fun TelemetryVideoBannerOverlay(
 
             HorizontalDivider()
 
-            // 4. JARAK
             VerticalStatItem(
                 icon = Icons.Default.Straighten,
                 label = uiText(language, "JARAK", "DISTANCE"),
@@ -162,7 +156,6 @@ fun TelemetryVideoBannerOverlay(
 
             HorizontalDivider()
 
-            // 5. TOP SPEED
             VerticalStatItem(
                 icon = Icons.Default.Speed,
                 label = "TOP SPEED",
@@ -173,7 +166,6 @@ fun TelemetryVideoBannerOverlay(
 
             HorizontalDivider()
 
-            // 6. RATA-RATA
             VerticalStatItem(
                 icon = Icons.Default.TrendingUp,
                 label = uiText(language, "RATA-RATA", "AVERAGE"),
@@ -202,32 +194,33 @@ private fun VerticalStatItem(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor.copy(alpha = 0.85f),
-                modifier = Modifier.size(11.dp)
+                modifier = Modifier.size(10.dp)
             )
-            Spacer(modifier = Modifier.width(3.dp))
+            Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = label,
                 color = HudMuted,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = RajdhaniFontFamily,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.2.sp,
+                maxLines = 1
             )
         }
         Text(
             text = value,
             color = accentColor,
-            fontSize = 12.sp,
+            fontSize = 10.5.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = OrbitronFontFamily,
-            letterSpacing = 0.2.sp,
+            letterSpacing = 0.sp,
             maxLines = 1
         )
         if (subText.isNotEmpty()) {
             Text(
                 text = subText,
                 color = HudWhite.copy(alpha = 0.55f),
-                fontSize = 8.5.sp,
+                fontSize = 7.5.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = FontFamily.Monospace,
                 maxLines = 1
