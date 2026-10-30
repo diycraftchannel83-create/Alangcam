@@ -489,35 +489,6 @@ class CameraRecordingManager(private val context: Context) {
         drawText("E", compassCx + compassRadius - 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
 
         // Telemetry dock remains on the left, below the GPS/video-profile stack.
-        // LAYER 2: Left Side - Simple Circular Compass (Elevated, without outer rectangular box)
-        val compassRadius = 55f * scale
-        val compassCx = margin + compassRadius + 8f * scale
-        val compassCy = top + headerHeight + 14f * scale + compassRadius
-
-        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.argb(230, 6, 12, 20) })
-        canvas.drawCircle(compassCx, compassCy, compassRadius, Paint(borderPaint).apply { color = cyan; strokeWidth = 1.8f * scale })
-        canvas.drawCircle(compassCx, compassCy, compassRadius * 0.65f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = AndroidColor.argb(70, 0, 240, 255); style = Paint.Style.STROKE; strokeWidth = 1.0f * scale
-        })
-
-        val bearingRad = Math.toRadians(telemetry.bearingDegrees.toDouble())
-        canvas.drawLine(
-            compassCx,
-            compassCy,
-            compassCx + kotlin.math.sin(bearingRad).toFloat() * compassRadius * 0.72f,
-            compassCy - kotlin.math.cos(bearingRad).toFloat() * compassRadius * 0.72f,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = green
-                strokeWidth = 4.5f * scale
-                strokeCap = Paint.Cap.ROUND
-                setShadowLayer(7f * scale, 0f, 0f, green)
-            }
-        )
-        drawText("N", compassCx, compassCy - compassRadius + 16f * scale, 14f, red, true, Paint.Align.CENTER)
-        drawText("S", compassCx, compassCy + compassRadius - 6f * scale, 11f, white, true, Paint.Align.CENTER)
-        drawText("W", compassCx - compassRadius + 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
-        drawText("E", compassCx + compassRadius - 10f * scale, compassCy + 4f * scale, 10f, white, true, Paint.Align.CENTER)
-
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
         val telemTop = techTop + techHeight + 12f * scale
         val telemWidth = 175f * scale
