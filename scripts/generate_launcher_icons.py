@@ -9,8 +9,12 @@ if not SOURCE.is_file():
     SOURCE = ROOT / "app" / "src" / "main" / "assets" / "CamRider PRO_ Racing Lens Icon.png"
 RES = ROOT / "app" / "src" / "main" / "res"
 
-if not SOURCE.is_file():
-    raise SystemExit(f"Launcher artwork not found: {SOURCE}")
+if not SOURCE.is_file() or SOURCE.stat().st_size < 1024:
+    raise SystemExit(
+        "CamRider PRO launcher PNG is missing or empty. "
+        "Add the supplied 512x512 PNG at repository root as "
+        "'CamRider PRO_ Racing Lens Icon.png' before building."
+    )
 
 image = Image.open(SOURCE).convert("RGBA")
 if image.width != image.height:
