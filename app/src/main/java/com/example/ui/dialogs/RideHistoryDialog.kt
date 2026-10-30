@@ -204,7 +204,7 @@ fun RideHistoryDialog(
                                 color = HudWhite
                             )
                             Text(
-                                text = "Tersimpan otomatis di 0://Movies/RiderCam/",
+                                text = "Tersimpan otomatis di 0://Movies/Camriderpro/",
                                 fontSize = 11.sp,
                                 color = HudMuted
                             )
@@ -245,7 +245,7 @@ fun RideHistoryDialog(
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                         context.startActivity(
-                                            Intent.createChooser(shareIntent, "Bagikan Video RiderCam")
+                                            Intent.createChooser(shareIntent, "Bagikan Video CamRiderPro")
                                         )
                                     } catch (_: Exception) {
                                     }
