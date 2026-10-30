@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class CamRiderProViewModel(application: Application) : AndroidViewModel(application) {
+class RiderCamViewModel(application: Application) : AndroidViewModel(application) {
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
