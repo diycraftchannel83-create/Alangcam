@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.GpsFixed
+import androidx.compose.material.icons.filled.GpsNotFixed
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
@@ -178,30 +180,54 @@ fun TelemetryOverlayHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Battery indicator only; GPS status is hidden from the dashboard.
+            // GPS Status & Battery Indicator
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(CockpitBlack.copy(alpha = 0.90f), RoundedCornerShape(12.dp))
+                    .background(
+                        color = CockpitBlack.copy(alpha = 0.90f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                     .border(1.2.dp, CockpitBorder, RoundedCornerShape(12.dp))
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Default.BatteryFull,
-                    contentDescription = "Battery",
-                    tint = if (batteryPercentage > 20) NeonGreen else NeonRed,
-                    modifier = Modifier.size(15.dp)
-                )
-                Spacer(modifier = Modifier.width(5.dp))
-                Text(
-                    text = "$batteryPercentage%",
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = HudWhite,
-                    fontFamily = RajdhaniFontFamily
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val gpsFixed = telemetry.isGpsFixed
+                    val gpsTint = if (gpsFixed) NeonGreen else NeonYellow
+                    Icon(
+                        imageVector = if (gpsFixed) Icons.Default.GpsFixed else Icons.Default.GpsNotFixed,
+                        contentDescription = "GPS Status",
+                        tint = gpsTint,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = if (gpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS...",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = gpsTint,
+                        fontFamily = RajdhaniFontFamily,
+                        letterSpacing = 0.4.sp
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.BatteryFull,
+                        contentDescription = "Battery",
+                        tint = if (batteryPercentage > 20) NeonGreen else NeonRed,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(
+                        text = "$batteryPercentage%",
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HudWhite,
+                        fontFamily = RajdhaniFontFamily
+                    )
+                }
             }
 
             // Bottom: Keterangan Rekaman 1080p with matching column width
