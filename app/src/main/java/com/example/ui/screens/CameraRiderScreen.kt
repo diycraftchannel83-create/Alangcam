@@ -290,7 +290,7 @@ fun CameraRiderScreen(
                 )
             }
 
-            // GPS compass/map is hidden from the on-screen dashboard.
+            // Compass/minimap intentionally removed from the dashboard; GPS telemetry remains active.
 
             val density = androidx.compose.ui.platform.LocalDensity.current
             val parentWidthPx = with(density) { maxWidth.toPx() }
