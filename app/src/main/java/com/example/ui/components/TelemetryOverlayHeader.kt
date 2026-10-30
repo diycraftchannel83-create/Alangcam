@@ -105,12 +105,12 @@ fun TelemetryOverlayHeader(
         label = "pulse_alpha"
     )
 
-    Row(
+    Column(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Top
+            .width(210.dp)
+            .padding(start = 14.dp, top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.Start
     ) {
         // Left: Recording Status Pill
         Row(
@@ -177,7 +177,7 @@ fun TelemetryOverlayHeader(
 
         // Right Column: GPS & Battery on top, Keterangan Rekaman 1080p directly below with same width
         Column(
-            modifier = Modifier.width(190.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // Top: GPS Status & Battery Indicator
