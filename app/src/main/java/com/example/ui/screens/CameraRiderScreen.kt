@@ -115,6 +115,7 @@ fun CameraRiderScreen(
     val isTorchActive by viewModel.isTorchActive.collectAsState()
     val isScreenLocked by viewModel.isScreenLocked.collectAsState()
     val settings by viewModel.settings.collectAsState()
+    val language by viewModel.language.collectAsState()
     val overlayConfig by viewModel.overlayConfig.collectAsState()
     val rides by viewModel.rides.collectAsState()
     val bannerMessage by viewModel.bannerMessage.collectAsState()
@@ -515,6 +516,8 @@ fun CameraRiderScreen(
         if (showSettingsDialog) {
             SettingsDialog(
                 settings = settings,
+                language = language,
+                onLanguageChange = { viewModel.setLanguage(it) },
                 overlayConfig = overlayConfig,
                 isSimulating = isSimulating,
                 onSettingsChange = { viewModel.updateSettings(it) },
