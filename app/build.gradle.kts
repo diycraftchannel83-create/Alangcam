@@ -70,6 +70,61 @@ android {
   }
 }
 
+
+/*
+ * Generate launcher mipmaps from the repository's supplied 512x512 racing-lens artwork.
+ * The task uses the JDK's built-in ImageIO so no extra build dependency is required.
+ */
+val generatedLauncherRes = layout.buildDirectory.dir("generated/res/launcherIcons/main")
+val generateLauncherIcons = tasks.register("generateLauncherIcons") {
+  val sourceIcon = rootProject.file("CamRider PRO_ Racing Lens Icon.png")
+  inputs.file(sourceIcon)
+  outputs.dir(generatedLauncherRes)
+  doLast {
+    if (!sourceIcon.isFile) {
+      throw GradleException("Launcher artwork not found: ${sourceIcon.absolutePath}")
+    }
+    val source = javax.imageio.ImageIO.read(sourceIcon)
+      ?: throw GradleException("Unable to decode launcher artwork PNG")
+    val outputRoot = generatedLauncherRes.get().asFile
+    outputRoot.deleteRecursively()
+
+    val densitySizes = mapOf(
+      "mipmap-mdpi" to 48,
+      "mipmap-hdpi" to 72,
+      "mipmap-xhdpi" to 96,
+      "mipmap-xxhdpi" to 144,
+      "mipmap-xxxhdpi" to 192
+    )
+    densitySizes.forEach { (folder, size) ->
+      val directory = outputRoot.resolve(folder).apply { mkdirs() }
+      val scaled = java.awt.image.BufferedImage(size, size, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+      val graphics = scaled.createGraphics()
+      graphics.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+      graphics.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
+      graphics.drawImage(source, 0, 0, size, size, null)
+      graphics.dispose()
+      listOf("ic_launcher.png", "ic_launcher_round.png").forEach { name ->
+        javax.imageio.ImageIO.write(scaled, "png", directory.resolve(name))
+      }
+    }
+
+    // Adaptive-icon foreground is inset to keep the full artwork visible under launcher masks.
+    val adaptiveDir = outputRoot.resolve("drawable-nodpi").apply { mkdirs() }
+    val adaptive = java.awt.image.BufferedImage(432, 432, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+    val ag = adaptive.createGraphics()
+    ag.color = java.awt.Color.BLACK
+    ag.fillRect(0, 0, 432, 432)
+    ag.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+    ag.drawImage(source, 36, 36, 360, 360, null)
+    ag.dispose()
+    javax.imageio.ImageIO.write(adaptive, "png", adaptiveDir.resolve("ic_launcher_foreground_image.png"))
+  }
+}
+
+android.sourceSets.getByName("main").res.srcDir(generatedLauncherRes)
+tasks.named("preBuild").configure { dependsOn(generateLauncherIcons) }
+
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
 // to match the convention used in Web projects.
 secrets {
