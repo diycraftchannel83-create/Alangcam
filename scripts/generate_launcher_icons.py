@@ -4,7 +4,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "app" / "src" / "main" / "assets" / "CamRider PRO_ Racing Lens Icon.png"
+SOURCE = ROOT / "CamRider PRO_ Racing Lens Icon.png"
+if not SOURCE.is_file():
+    SOURCE = ROOT / "app" / "src" / "main" / "assets" / "CamRider PRO_ Racing Lens Icon.png"
 RES = ROOT / "app" / "src" / "main" / "res"
 
 if not SOURCE.is_file():
