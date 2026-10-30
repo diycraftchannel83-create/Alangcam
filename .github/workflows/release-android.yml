@@ -72,6 +72,9 @@ jobs:
         run: |
           python3 -m pip install --user Pillow
           python3 scripts/generate_launcher_icons.py
+          test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
+          test -s app/src/main/res/mipmap-mdpi/ic_launcher.png
+          echo "Launcher resources generated successfully."
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -84,7 +87,9 @@ jobs:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle --no-daemon --stacktrace :app:assembleRelease :app:bundleRelease
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
 
       - name: Collect release files
         shell: bash
