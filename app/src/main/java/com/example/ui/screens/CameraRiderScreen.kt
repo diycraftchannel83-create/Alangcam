@@ -1,0 +1,531 @@
+package com.example.ui.screens
+
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.view.Surface
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.view.PreviewView
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.OpenWith
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.ui.RiderCamViewModel
+import com.example.ui.components.CompassMiniMapHud
+import com.example.ui.components.HandlebarControlBar
+import com.example.ui.components.ScreenLockOverlay
+import com.example.ui.components.SpeedometerCockpit
+import com.example.ui.components.TelemetryOverlayHeader
+import com.example.ui.components.TelemetryVideoBannerOverlay
+import com.example.ui.dialogs.RideHistoryDialog
+import com.example.ui.dialogs.SettingsDialog
+import com.example.ui.theme.CockpitBlack
+import com.example.ui.theme.CockpitBorder
+import com.example.ui.theme.CockpitCard
+import com.example.ui.theme.CockpitSurface
+import com.example.ui.theme.HudMuted
+import com.example.ui.theme.HudWhite
+import com.example.ui.theme.NeonAmber
+import com.example.ui.theme.NeonCyan
+import com.example.ui.theme.NeonGreen
+import com.example.ui.theme.NeonRed
+import com.example.ui.theme.NeonYellow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+@Composable
+fun CameraRiderScreen(
+    viewModel: RiderCamViewModel,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    val telemetry by viewModel.telemetry.collectAsState()
+    val isRecording by viewModel.isRecording.collectAsState()
+    val recordingDuration by viewModel.recordingDurationSeconds.collectAsState()
+    val isNightBoostActive by viewModel.isNightBoostActive.collectAsState()
+    val isTorchActive by viewModel.isTorchActive.collectAsState()
+    val isScreenLocked by viewModel.isScreenLocked.collectAsState()
+    val settings by viewModel.settings.collectAsState()
+    val overlayConfig by viewModel.overlayConfig.collectAsState()
+    val rides by viewModel.rides.collectAsState()
+    val bannerMessage by viewModel.bannerMessage.collectAsState()
+    val isSimulating by viewModel.isSimulating.collectAsState()
+
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showHistoryDialog by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
+    var showNavigationControls by remember { mutableStateOf(true) }
+    val exitScope = rememberCoroutineScope()
+    var previewViewRef by remember { mutableStateOf<PreviewView?>(null) }
+    var isCameraBound by remember { mutableStateOf(false) }
+
+    // Permissions check & request
+    val hasCameraPerm = remember(context) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    }
+    val hasLocPerm = remember(context) {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+    var permissionsGranted by remember { mutableStateOf(hasCameraPerm && hasLocPerm) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val cameraOk = results[Manifest.permission.CAMERA] == true
+        val locationOk = results[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                results[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        permissionsGranted = cameraOk && locationOk
+        if (permissionsGranted && !isCameraBound) {
+            isCameraBound = true
+            viewModel.startGpsTracking()
+            previewViewRef?.let { pv ->
+                viewModel.cameraManager.bindCamera(lifecycleOwner, pv, settings.resolution)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        permissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+    // CameraX must receive the current display rotation as the device changes
+    // between portrait and landscape; otherwise MP4 files retain landscape orientation.
+    LaunchedEffect(isLandscape) {
+        previewViewRef?.let { preview ->
+            val rotation = preview.display?.rotation
+                ?: if (isLandscape) Surface.ROTATION_90 else Surface.ROTATION_0
+            viewModel.cameraManager.updateTargetRotation(rotation)
+        }
+    }
+
+    // Auto-dismiss banner messages after 3 seconds
+    LaunchedEffect(bannerMessage) {
+        if (bannerMessage != null) {
+            delay(3200)
+            viewModel.clearBanner()
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(CockpitBlack)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                showNavigationControls = !showNavigationControls
+            }
+    ) {
+        // LAYER 1 — CameraPreviewLayer: live camera only.
+        AndroidView(
+            factory = { ctx ->
+                PreviewView(ctx).apply {
+                    // COMPATIBLE mode (TextureView) avoids EGL_BAD_ATTRIBUTE (0x3004) on emulators & GL overlays
+                    implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
+                    previewViewRef = this
+                    if (permissionsGranted && !isCameraBound) {
+                        isCameraBound = true
+                        viewModel.startGpsTracking()
+                        viewModel.cameraManager.bindCamera(lifecycleOwner, this, settings.resolution)
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Subtle Night Boost Contrast Filter overlay when active
+        if (isNightBoostActive) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x1800E5FF))
+            )
+        }
+
+        // LAYER 2 — TelemetryHUDLayer: Compose preview HUD. CameraX OverlayEffect burns its matching HUD into the MP4.
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+        ) {
+            // Top HUD Status Bar
+            TelemetryOverlayHeader(
+                isRecording = isRecording,
+                recordingDurationSeconds = recordingDuration,
+                settings = settings,
+                telemetry = telemetry,
+                isNightBoostActive = isNightBoostActive,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+
+            // Left-Side Vertical Telemetry & Navigation Stack (leaves bottom empty)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = if (isLandscape) 52.dp else 56.dp, start = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (overlayConfig.showGpsMap) {
+                    CompassMiniMapHud(
+                        telemetry = telemetry
+                    )
+                }
+
+                TelemetryVideoBannerOverlay(
+                    telemetry = telemetry,
+                    speedUnit = settings.speedUnit,
+                    overlayConfig = overlayConfig
+                )
+            }
+
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            val parentWidthPx = with(density) { maxWidth.toPx() }
+            val parentHeightPx = with(density) { maxHeight.toPx() }
+            val gaugeSize = if (isLandscape) 184.dp else 214.dp
+            val gaugeHalf = gaugeSize / 2
+            val gaugeTotalHeight = gaugeSize + 64.dp
+
+            // Speedometer Cockpit with customizable position (shifted to the right by default, draggable when unlocked)
+            if (overlayConfig.showSpeedometer) {
+                val posX = (maxWidth * overlayConfig.speedometerXRatio) - gaugeHalf
+                val posY = (maxHeight * overlayConfig.speedometerYRatio) - gaugeHalf
+
+                Column(
+                    modifier = Modifier
+                        .offset(
+                            x = posX.coerceIn(0.dp, maxWidth - gaugeSize),
+                            y = posY.coerceIn(40.dp, (maxHeight - gaugeTotalHeight).coerceAtLeast(40.dp))
+                        )
+                        .pointerInput(overlayConfig.isSpeedometerLocked, parentWidthPx, parentHeightPx) {
+                            if (!overlayConfig.isSpeedometerLocked) {
+                                detectDragGestures { change, dragAmount ->
+                                    change.consume()
+                                    if (parentWidthPx > 0f && parentHeightPx > 0f) {
+                                        val newX = (overlayConfig.speedometerXRatio + (dragAmount.x / parentWidthPx)).coerceIn(0.18f, 0.82f)
+                                        val newY = (overlayConfig.speedometerYRatio + (dragAmount.y / parentHeightPx)).coerceIn(0.18f, 0.78f)
+                                        viewModel.updateSpeedometerPosition(newX, newY)
+                                    }
+                                }
+                            }
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (!overlayConfig.isSpeedometerLocked) {
+                        Row(
+                            modifier = Modifier
+                                .background(CockpitCard.copy(alpha = 0.92f), RoundedCornerShape(12.dp))
+                                .border(1.2.dp, NeonAmber, RoundedCornerShape(12.dp))
+                                .clickable { viewModel.toggleSpeedometerLock() }
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.OpenWith,
+                                contentDescription = null,
+                                tint = NeonAmber,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "GESER SPEDOMETER • KETUK KUNCI",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NeonAmber
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                    }
+
+                    SpeedometerCockpit(
+                        telemetry = telemetry,
+                        speedUnit = settings.speedUnit,
+                        showGearRpm = overlayConfig.showGearRpm,
+                        isLandscape = isLandscape
+                    )
+                }
+            }
+
+            // Floating Notification Toast/Banner
+            AnimatedVisibility(
+                visible = bannerMessage != null,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 70.dp)
+            ) {
+                bannerMessage?.let { msg ->
+                    Row(
+                        modifier = Modifier
+                            .background(CockpitSurface.copy(alpha = 0.95f), RoundedCornerShape(14.dp))
+                            .border(1.dp, NeonGreen.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = NeonGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = msg,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = HudWhite
+                        )
+                    }
+                }
+            }
+        }
+
+        // LAYER 3 — ControlLayer: slides smoothly out to the right when screen is tapped
+        // Shifted up by ~1cm (approx 38-42dp) above the bottom edge per user instruction
+        AnimatedVisibility(
+            visible = showNavigationControls,
+            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 8.dp, bottom = if (isLandscape) 46.dp else 54.dp)
+        ) {
+            HandlebarControlBar(
+                isRecording = isRecording,
+                isAudioEnabled = settings.audioEnabled,
+                isNightBoostActive = isNightBoostActive,
+                isTorchActive = isTorchActive,
+                isSpeedometerLocked = overlayConfig.isSpeedometerLocked,
+                onRecordToggle = { viewModel.toggleRecord() },
+                onCameraSwitch = {
+                    previewViewRef?.let { pv ->
+                        viewModel.cameraManager.switchCamera(lifecycleOwner, pv, settings.resolution)
+                    }
+                },
+                onAudioToggle = { viewModel.toggleAudio() },
+                onNightToggle = { viewModel.toggleNightBoost() },
+                onTorchToggle = { viewModel.toggleTorch() },
+                onLockScreen = { viewModel.lockScreen() },
+                onToggleSpeedometerDrag = { viewModel.toggleSpeedometerLock() },
+                onOpenSettings = { showSettingsDialog = true },
+                onOpenHistory = { showHistoryDialog = true },
+                onExitApp = {
+                    if (isRecording) {
+                        showExitConfirmation = true
+                    } else {
+                        (context as? Activity)?.finishAffinity()
+                    }
+                }
+            )
+        }
+
+        // Permission UI also belongs to the topmost control/application layer.
+        if (!permissionsGranted) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(CockpitBlack.copy(alpha = 0.88f))
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(if (isLandscape) 0.65f else 0.92f)
+                        .testTag("permission_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = CockpitSurface),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, NeonGreen)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsBike,
+                            contentDescription = null,
+                            tint = NeonGreen,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "RIDERCAM DASHBOARD",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = HudWhite
+                        )
+                        Text(
+                            text = "Aplikasi dashcam motor membutuhkan izin Kamera, Mikrofon, dan GPS untuk menghitung kecepatan presisi secara real-time dan merekam video.",
+                            fontSize = 12.sp,
+                            color = HudMuted,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                        Button(
+                            onClick = {
+                                permissionLauncher.launch(
+                                    arrayOf(
+                                        Manifest.permission.CAMERA,
+                                        Manifest.permission.RECORD_AUDIO,
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = NeonGreen,
+                                contentColor = Color.Black
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().testTag("btn_grant_permissions")
+                        ) {
+                            Icon(imageVector = Icons.Default.Security, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "IZINKAN AKSES & MULAI",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Handlebar Screen Lock Overlay (Touch Protection against rain & vibration)
+        ScreenLockOverlay(
+            isLocked = isScreenLocked,
+            onUnlock = { viewModel.unlockScreen() }
+        )
+
+        // 5. Settings Dialog
+        if (showSettingsDialog) {
+            SettingsDialog(
+                settings = settings,
+                overlayConfig = overlayConfig,
+                isSimulating = isSimulating,
+                onSettingsChange = { viewModel.updateSettings(it) },
+                onOverlayConfigChange = { viewModel.updateOverlayConfig(it) },
+                onToggleSimulation = { viewModel.toggleSimulation() },
+                onDismiss = { showSettingsDialog = false }
+            )
+        }
+
+        if (showExitConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showExitConfirmation = false },
+                title = { Text("Keluar dari CamRiderPro?") },
+                text = { Text("Perekaman masih berjalan. Hentikan dan simpan rekaman sebelum keluar?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showExitConfirmation = false
+                        viewModel.toggleRecord()
+                        exitScope.launch {
+                            // Give CameraX time to finalize and save the MP4.
+                            delay(1800)
+                            (context as? Activity)?.finishAffinity()
+                        }
+                    }) {
+                        Text("HENTIKAN & KELUAR", color = NeonRed)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showExitConfirmation = false }) {
+                        Text("BATAL", color = HudWhite)
+                    }
+                },
+                containerColor = CockpitSurface,
+                titleContentColor = HudWhite,
+                textContentColor = HudMuted
+            )
+        }
+
+        // 6. Ride History & Recorded Videos Dialog
+        if (showHistoryDialog) {
+            RideHistoryDialog(
+                rides = rides,
+                speedUnit = settings.speedUnit,
+                onDeleteRide = { viewModel.deleteRide(it) },
+                onDismiss = { showHistoryDialog = false }
+            )
+        }
+    }
+}
