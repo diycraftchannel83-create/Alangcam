@@ -290,15 +290,7 @@ fun CameraRiderScreen(
                 )
             }
 
-            // GPS compass / route radar is consistently anchored to the upper-right in portrait and landscape.
-            if (overlayConfig.showGpsMap) {
-                CompassMiniMapHud(
-                    telemetry = telemetry,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = if (isLandscape) 54.dp else 58.dp, end = 14.dp)
-                )
-            }
+            // GPS compass/map is hidden from the on-screen dashboard.
 
             val density = androidx.compose.ui.platform.LocalDensity.current
             val parentWidthPx = with(density) { maxWidth.toPx() }
