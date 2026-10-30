@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "RiderCam"
+rootProject.name = "CamRiderPro"
 
 include(":app")
