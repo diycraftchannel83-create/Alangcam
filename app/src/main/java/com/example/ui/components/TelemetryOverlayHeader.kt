@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.GpsTelemetry
 import com.example.data.model.RecordingSettings
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBlack
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitCard
@@ -71,6 +72,7 @@ fun TelemetryOverlayHeader(
     settings: RecordingSettings,
     telemetry: GpsTelemetry,
     isNightBoostActive: Boolean,
+    language: String = "id",
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -156,7 +158,7 @@ fun TelemetryOverlayHeader(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "STANDBY • READY",
+                    text = uiText(language, "SIAGA • SIAP", "STANDBY • READY"),
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = NeonGreen,
@@ -184,13 +186,13 @@ fun TelemetryOverlayHeader(
                     val gpsTint = if (gpsFixed) NeonGreen else NeonYellow
                     Icon(
                         imageVector = if (gpsFixed) Icons.Default.GpsFixed else Icons.Default.GpsNotFixed,
-                        contentDescription = "GPS Status",
+                        contentDescription = uiText(language, "Status GPS", "GPS Status"),
                         tint = gpsTint,
                         modifier = Modifier.size(30.dp)
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
-                        text = if (gpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS...",
+                        text = if (gpsFixed) "${uiText(language, "GPS TERKUNCI", "GPS LOCK")} (${telemetry.satellitesCount})" else uiText(language, "MENCARI GPS...", "SEARCHING GPS..."),
                         fontSize = 23.sp,
                         fontWeight = FontWeight.Bold,
                         color = gpsTint,
