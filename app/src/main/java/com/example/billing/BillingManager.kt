@@ -151,10 +151,12 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
             _state.value = _state.value.copy(message = "Penawaran pembelian belum tersedia.")
             return
         }
-        val params = BillingFlowParams.ProductDetailsParams.newBuilder()
+        val paramsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(details)
-            .setOfferToken(offer.offerToken)
-            .build()
+        // One-time product offer tokens can be nullable in newer Play Billing APIs.
+        // Only set the token when Google Play actually provides one.
+        offer.offerToken?.let { token -> paramsBuilder.setOfferToken(token) }
+        val params = paramsBuilder.build()
         val result = billingClient.launchBillingFlow(
             activity,
             BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(params)).build()
