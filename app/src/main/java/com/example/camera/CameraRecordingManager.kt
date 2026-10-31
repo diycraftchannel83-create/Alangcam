@@ -375,7 +375,11 @@ class CameraRecordingManager(private val context: Context) {
         val white = AndroidColor.rgb(248, 250, 252)
         val muted = AndroidColor.rgb(160, 185, 205)
 
-        val panelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.argb(215, 6, 12, 20) }
+        // HUD panels are outlines and telemetry only; leave the camera image fully visible beneath them.
+        val panelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = AndroidColor.TRANSPARENT
+            style = Paint.Style.FILL
+        }
         val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = cyan
             style = Paint.Style.STROKE
@@ -532,7 +536,6 @@ class CameraRecordingManager(private val context: Context) {
             val cy = (h * ratioY).coerceIn(radius + 15f * scale, h - radius - 85f * scale)
             val dial = RectF(cx - radius, cy - radius, cx + radius, cy + radius)
 
-        canvas.drawCircle(cx, cy, radius + 15f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = AndroidColor.argb(225, 4, 10, 18) })
         val arc = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = cyan
             style = Paint.Style.STROKE
