@@ -132,7 +132,7 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
                 // Yellow navigation buttons; only the selected category is rendered.
                 listOf(
-                    Triple("monetization", uiText(language, "MONETISASI", "MONETIZATION"), Icons.Default.Videocam),
+                    Triple("monetization", uiText(language, "CREDIT", "CREDIT"), Icons.Default.Videocam),
                     Triple("language", uiText(language, "BAHASA", "LANGUAGE"), Icons.Default.Settings),
                     Triple("simulation", uiText(language, "SIMULASI", "SIMULATION"), Icons.Default.DirectionsBike),
                     Triple("recording", uiText(language, "REKAMAN", "RECORDING"), Icons.Default.Videocam),
@@ -155,7 +155,7 @@ fun SettingsDialog(
 
                 if (selectedSection == "monetization") {
                 SettingsSectionHeader(
-                    uiText(language, "MONETISASI CAMRIDERPRO", "CAMRIDERPRO MONETIZATION"),
+                    uiText(language, "RECORDING CREDIT", "RECORDING CREDIT"),
                     Icons.Default.Videocam
                 )
                 SettingsCard {

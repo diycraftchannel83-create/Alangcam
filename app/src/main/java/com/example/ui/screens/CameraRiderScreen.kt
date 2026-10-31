@@ -300,6 +300,28 @@ fun CameraRiderScreen(
                     language = language,
                     isLandscape = isLandscape
                 )
+
+                // Secondary CamRiderPro branding watermark below the telemetry stack.
+                // The Alang Motor watermark remains separately positioned below the speedometer.
+                if (!billingState.isPremium) {
+                    val watermarkContext = LocalContext.current
+                    val createdWithBitmap = remember(watermarkContext) {
+                        android.graphics.BitmapFactory.decodeResource(
+                            watermarkContext.resources,
+                            com.example.R.drawable.watermark_created_camrider
+                        )
+                    }
+                    if (createdWithBitmap != null) {
+                        Image(
+                            bitmap = createdWithBitmap.asImageBitmap(),
+                            contentDescription = "Created with CamRiderPro watermark",
+                            alpha = 0.92f,
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .width(if (isLandscape) 116.dp else 150.dp)
+                        )
+                    }
+                }
             }
 
             // Compass/minimap intentionally removed from the dashboard; GPS telemetry remains active.
