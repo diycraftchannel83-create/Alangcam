@@ -44,6 +44,7 @@ fun MonetizationDialog(
     val isId = language == "id"
     val creditHours = state.creditSeconds / 3600L
     val creditMinutes = (state.creditSeconds % 3600L) / 60L
+    val creditUnits = (state.creditSeconds * 1000L) / 3600L
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -68,10 +69,15 @@ fun MonetizationDialog(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = String.format("%02d:%02d", creditHours, creditMinutes),
+                    text = String.format("%,d", creditUnits),
                     color = NeonGreen,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Black
+                )
+                Text(
+                    text = String.format("%02d:%02d %s", creditHours, creditMinutes, uiText(language, "jam tersisa", "hours remaining")),
+                    color = HudMuted,
+                    fontSize = 11.sp
                 )
                 Text(
                     text = uiText(language, "Sisa waktu rekam berbayar", "Remaining paid recording time"),
@@ -114,13 +120,13 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = uiText(language, "KREDIT REKAM • 4 JAM", "RECORDING CREDIT • 4 HOURS"),
+                    text = uiText(language, "KREDIT REKAM • 1.000 KREDIT", "RECORDING CREDIT • 1,000 CREDITS"),
                     color = HudWhite,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = uiText(language, "Tambahkan 240 menit waktu rekam. Kredit dapat ditumpuk dan dipakai sampai habis. Watermark tetap ada jika belum membeli Premium.", "Add 240 minutes of recording time. Credits accumulate and remain until used. Watermark stays unless Premium is purchased."),
+                    text = uiText(language, "Tambahkan 1.000 kredit untuk 1 jam rekaman. Kredit dapat ditumpuk dan saldo berkurang sesuai durasi rekaman. Watermark tetap ada jika belum membeli Premium.", "Add 1,000 credits for 1 hour of recording. Credits stack and are deducted according to recording duration. Watermark stays unless Premium is purchased."),
                     color = HudMuted,
                     fontSize = 11.sp
                 )
@@ -132,7 +138,7 @@ fun MonetizationDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
                 ) {
                     Text(
-                        text = "${uiText(language, "TOP UP 4 JAM", "TOP UP 4 HOURS")} • ${state.creditPrice}",
+                        text = "${uiText(language, "TOP UP 1.000 KREDIT", "TOP UP 1,000 CREDITS")} • ${state.creditPrice}",
                         fontWeight = FontWeight.Bold
                     )
                 }
