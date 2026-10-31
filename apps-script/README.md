@@ -48,6 +48,13 @@ Every POST body is JSON and includes `idToken` (a current Firebase Authenticatio
 
 Successful responses have `{ "ok": true, "data": ... }`; failures have `{ "ok": false, "error": "..." }`.
 
-## Android integration status
+## Android integration
 
-The Android app still points at the previous Firebase Functions/Firestore repository until the Apps Script deployment URL is known and the Android client migration is completed. Do not release this backend as active until the app's repository is migrated, the URL is configured, and the end-to-end purchase/session tests pass.
+The Android client has been migrated to call this Apps Script API and continues to use Firebase Authentication only to obtain ID tokens. Firestore and Firebase Functions Android dependencies have been removed.
+
+Before building an APK/AAB with working credit features, configure the Apps Script deployment URL as a Gradle property or environment variable named `CREDIT_API_URL`. The value must be the deployed Web App URL ending in `/exec`.
+
+- Local build: add `CREDIT_API_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec` to `~/.gradle/gradle.properties` (or pass `-PCREDIT_API_URL=...`).
+- GitHub Actions: add a repository variable named `CREDIT_API_URL` with the same URL and expose it to the Gradle build environment.
+
+Do not release until the endpoint is configured and the following tests pass: authenticated wallet read, each of the three credit purchases, duplicate purchase-token replay, watermark purchase, start/heartbeat/finish session, insufficient balance, and network-loss behavior.
