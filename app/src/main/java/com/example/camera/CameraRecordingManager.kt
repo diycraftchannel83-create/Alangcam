@@ -423,7 +423,7 @@ class CameraRecordingManager(private val context: Context) {
         drawText("REC VIDEO", margin + 24f * scale, top + 34f * scale, 30f, red, true)
 
         // GPS + battery stack directly beneath the recording status pill.
-        val rightWidth = 320f * scale
+        val rightWidth = 380f * scale
         val gpsPanelTop = top + headerHeight + 5f * scale
         val gpsColor = if (telemetry.isGpsFixed) green else yellow
 
@@ -431,6 +431,26 @@ class CameraRecordingManager(private val context: Context) {
         canvas.drawCircle(margin + 8f * scale, gpsPanelTop + 16f * scale, 6f * scale,
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gpsColor; setShadowLayer(8f * scale, 0f, 0f, gpsColor) })
         drawText(gpsLabel, margin + 22f * scale, gpsPanelTop + 24f * scale, 23f, gpsColor, true)
+
+        // Borderless battery icon and percentage on the same status row.
+        val battery = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+        val level = battery?.getIntExtra("level", -1) ?: -1
+        val batteryScale = battery?.getIntExtra("scale", 100) ?: 100
+        val batteryPercent = if (level >= 0 && batteryScale > 0) level * 100 / batteryScale else 100
+        val batteryColor = if (batteryPercent > 20) green else red
+        val bx = margin + 285f * scale
+        val by = gpsPanelTop + 5f * scale
+        val batteryOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = batteryColor
+            style = Paint.Style.STROKE
+            strokeWidth = 2.5f * scale
+        }
+        canvas.drawRoundRect(RectF(bx, by, bx + 26f * scale, by + 22f * scale), 4f * scale, 4f * scale, batteryOutline)
+        canvas.drawRect(bx + 26f * scale, by + 7f * scale, bx + 30f * scale, by + 15f * scale,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply { color = batteryColor })
+        canvas.drawRect(bx + 4f * scale, by + 4f * scale, bx + (4f + 18f * batteryPercent / 100f) * scale, by + 18f * scale,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply { color = batteryColor })
+        drawText("$batteryPercent%", bx + 38f * scale, gpsPanelTop + 24f * scale, 21f, batteryColor, true)
 
         // Video resolution / frame-rate indicator directly beneath GPS + battery.
         val techHeight = 48f * scale
