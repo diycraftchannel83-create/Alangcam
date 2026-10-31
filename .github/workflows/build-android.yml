@@ -67,6 +67,14 @@ jobs:
           chmod 600 "$RUNNER_TEMP/camriderpro-release.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/camriderpro-release.jks" >> "$GITHUB_ENV"
 
+      - name: Generate launcher icons from CamRider PRO artwork
+        run: |
+          python3 -m pip install Pillow
+          python3 scripts/generate_launcher_icons.py
+          test -s app/src/main/res/drawable/ic_launcher_art.png
+          test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
+          test -s app/src/main/res/mipmap-mdpi/ic_launcher.png
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
