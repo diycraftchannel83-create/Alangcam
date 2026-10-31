@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.billing.BillingUiState
+import com.example.ui.uiText
 import com.example.ui.theme.CockpitBorder
 import com.example.ui.theme.CockpitSurface
 import com.example.ui.theme.HudMuted
@@ -53,7 +54,7 @@ fun MonetizationDialog(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = if (isId) "UPGRADE & KREDIT REKAM" else "UPGRADE & RECORDING CREDITS",
+                    text = uiText(language, "UPGRADE & KREDIT REKAM", "UPGRADE & RECORDING CREDITS"),
                     color = NeonYellow,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Black
@@ -61,7 +62,7 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = if (isId) "SALDO KREDIT REKAM" else "RECORDING CREDIT BALANCE",
+                    text = uiText(language, "SALDO KREDIT REKAM", "RECORDING CREDIT BALANCE"),
                     color = HudMuted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
@@ -73,7 +74,7 @@ fun MonetizationDialog(
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = if (isId) "Sisa waktu rekam berbayar" else "Remaining paid recording time",
+                    text = uiText(language, "Sisa waktu rekam berbayar", "Remaining paid recording time"),
                     color = HudMuted,
                     fontSize = 11.sp
                 )
@@ -113,7 +114,7 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = if (isId) "RECORDING CREDIT • 4 JAM" else "RECORDING CREDIT • 4 HOURS",
+                    text = uiText(language, "KREDIT REKAM • 4 JAM", "RECORDING CREDIT • 4 HOURS"),
                     color = HudWhite,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -147,15 +148,15 @@ fun MonetizationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onRefresh) {
-                        Text(if (isId) "PULIHKAN PREMIUM" else "RESTORE PREMIUM", color = NeonGreen)
+                        Text(uiText(language, "PULIHKAN PREMIUM", "RESTORE PREMIUM"), color = NeonGreen)
                     }
                     TextButton(onClick = onDismiss) {
-                        Text(if (isId) "TUTUP" else "CLOSE", color = HudMuted)
+                        Text(uiText(language, "TUTUP", "CLOSE"), color = HudMuted)
                     }
                 }
                 if (!state.isConnected) {
                     Text(
-                        text = if (isId) "Menghubungkan ke Google Play..." else "Connecting to Google Play...",
+                        text = uiText(language, "Menghubungkan ke Google Play...", "Connecting to Google Play..."),
                         color = HudMuted,
                         fontSize = 10.sp
                     )
