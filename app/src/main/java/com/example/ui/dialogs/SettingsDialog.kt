@@ -70,6 +70,7 @@ fun SettingsDialog(
     onToggleSimulation: () -> Unit,
     language: String,
     onLanguageChange: (String) -> Unit,
+    onOpenMonetization: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -121,6 +122,36 @@ fun SettingsDialog(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                SettingsSectionHeader(
+                    uiText(language, "MONETISASI CAMRIDERPRO", "CAMRIDERPRO MONETIZATION"),
+                    Icons.Default.Videocam
+                )
+                SettingsCard {
+                    Text(
+                        text = uiText(language, "Premium Lifetime hanya menghapus watermark. Kredit rekam menambah durasi hingga 4 jam.", "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours."),
+                        fontSize = 11.sp,
+                        color = HudMuted
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(NeonGreen, RoundedCornerShape(9.dp))
+                            .clickable(onClick = onOpenMonetization)
+                            .padding(vertical = 11.dp, horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = uiText(language, "UPGRADE & TOP UP KREDIT", "UPGRADE & TOP UP CREDITS"),
+                            color = Color.Black,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Language preference
                 SettingsSectionHeader(if (language == "id") "BAHASA APLIKASI" else "APP LANGUAGE", Icons.Default.Settings)
