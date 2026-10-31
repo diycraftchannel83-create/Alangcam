@@ -3,7 +3,6 @@ package com.example.billing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +20,7 @@ data class CreditWallet(
  */
 class FirebaseCreditRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
-    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
     private val _wallet = MutableStateFlow<CreditWallet?>(null)
     val wallet: StateFlow<CreditWallet?> = _wallet.asStateFlow()
