@@ -38,9 +38,9 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
-    val billingManager = BillingManager(application)
-    val billingState: StateFlow<com.example.billing.BillingUiState> = billingManager.state
     private val creditRepository = FirebaseCreditRepository()
+    val billingManager = BillingManager(application, creditRepository)
+    val billingState: StateFlow<com.example.billing.BillingUiState> = billingManager.state
     private var creditSessionId: String? = null
     private var creditHeartbeatJob: Job? = null
     private var creditSessionInitialSeconds: Long? = null
