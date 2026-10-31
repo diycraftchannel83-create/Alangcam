@@ -575,7 +575,7 @@ class CameraRecordingManager(private val context: Context) {
                     speedAtTick.toString(),
                     cx + kotlin.math.cos(angle).toFloat() * (radius - 36f * scale),
                     cy + kotlin.math.sin(angle).toFloat() * (radius - 36f * scale) + 5f * scale,
-                    12.5f,
+                    25f,
                     numColor,
                     true,
                     Paint.Align.CENTER
@@ -609,13 +609,13 @@ class CameraRecordingManager(private val context: Context) {
         })
 
         // Digital speed is centered in the dial; no central pivot graphic.
-        drawText(speed.toInt().toString(), cx, cy + 12f * scale, 39f, white, true, Paint.Align.CENTER)
-        drawText(unit.uppercase(Locale.ROOT), cx, cy + 32f * scale, 11f, cyan, true, Paint.Align.CENTER)
+        drawText(speed.toInt().toString(), cx, cy + 12f * scale, 78f, white, true, Paint.Align.CENTER)
+        drawText(unit.uppercase(Locale.ROOT), cx, cy + 32f * scale, 22f, cyan, true, Paint.Align.CENTER)
 
         val digitalY = cy + radius + 10f * scale
         val gearStr = if (telemetry.gear.isNotEmpty() && telemetry.gear != "--") "GEAR ${telemetry.gear} • ${telemetry.rpm} RPM" else "GEAR / RPM --"
         if (config?.showGearRpm != false) {
-            drawText(gearStr, cx, digitalY + 15f * scale, 11.5f, green, true, Paint.Align.CENTER)
+            drawText(gearStr, cx, digitalY + 15f * scale, 23f, green, true, Paint.Align.CENTER)
         }
         }
 
