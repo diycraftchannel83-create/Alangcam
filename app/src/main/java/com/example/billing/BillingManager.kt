@@ -37,7 +37,7 @@ data class BillingUiState(
 class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
         const val PREMIUM_PRODUCT_ID = "remove_watermark"
-        const val RECORDING_CREDIT_PRODUCT_ID = "1_1000_credit"
+        const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
         const val RECORDING_CREDIT_SECONDS = 60L * 60L
         private const val PREFS_NAME = "camriderpro_billing"
         private const val KEY_PREMIUM = "premium_owned"
