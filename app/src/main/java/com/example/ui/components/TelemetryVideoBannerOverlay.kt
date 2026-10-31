@@ -88,15 +88,6 @@ fun TelemetryVideoBannerOverlay(
     Box(
         modifier = modifier
             .width(104.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        CockpitBlack.copy(alpha = 0.88f),
-                        CockpitCard.copy(alpha = 0.92f)
-                    )
-                ),
-                shape = RoundedCornerShape(14.dp)
-            )
             .border(
                 width = 1.dp,
                 brush = Brush.verticalGradient(
