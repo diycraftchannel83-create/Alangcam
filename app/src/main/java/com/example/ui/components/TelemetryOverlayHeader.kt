@@ -124,14 +124,14 @@ fun TelemetryOverlayHeader(
             if (isRecording) {
                 Box(
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(16.5.dp)
                         .alpha(pulseAlpha)
                         .background(NeonRed, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(7.dp))
                 Text(
                     text = "REC",
-                    fontSize = 28.sp,
+                    fontSize = 21.sp,
                     fontWeight = FontWeight.Bold,
                     color = NeonRed,
                     fontFamily = OrbitronFontFamily,
@@ -144,7 +144,7 @@ fun TelemetryOverlayHeader(
                 val timeFormatted = String.format("%02d:%02d:%02d", hours, minutes, seconds)
                 Text(
                     text = timeFormatted,
-                    fontSize = 30.sp,
+                    fontSize = 22.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = HudWhite,
                     fontFamily = OrbitronFontFamily
@@ -154,12 +154,12 @@ fun TelemetryOverlayHeader(
                     imageVector = Icons.Default.Videocam,
                     contentDescription = null,
                     tint = NeonGreen,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = uiText(language, "SIAGA • SIAP", "STANDBY • READY"),
-                    fontSize = 26.sp,
+                    fontSize = 19.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = NeonGreen,
                     fontFamily = RajdhaniFontFamily,
@@ -188,12 +188,12 @@ fun TelemetryOverlayHeader(
                         imageVector = if (gpsFixed) Icons.Default.GpsFixed else Icons.Default.GpsNotFixed,
                         contentDescription = uiText(language, "Status GPS", "GPS Status"),
                         tint = gpsTint,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(22.5.dp)
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = if (gpsFixed) "${uiText(language, "GPS TERKUNCI", "GPS LOCK")} (${telemetry.satellitesCount})" else uiText(language, "MENCARI GPS...", "SEARCHING GPS..."),
-                        fontSize = 23.sp,
+                        fontSize = 17.25.sp,
                         fontWeight = FontWeight.Bold,
                         color = gpsTint,
                         fontFamily = RajdhaniFontFamily,
