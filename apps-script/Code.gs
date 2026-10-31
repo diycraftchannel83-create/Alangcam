@@ -159,7 +159,22 @@ function verifyWatermarkPurchase_(uid, body) {
   const purchase = getPlayProductPurchase_(productId, purchaseToken);
   if (Number(purchase.purchaseState) !== 0) throw new Error("Google Play purchase is not completed.");
 
+  const tokenHash = sha256_(purchaseToken);
   return withScriptLock_(function() {
+    const ss = getSpreadsheet_();
+    const purchases = ss.getSheetByName("purchases");
+    const existingRow = findRow_(purchases, 1, tokenHash);
+    if (existingRow) {
+      const existing = purchases.getRange(existingRow, 1, 1, HEADERS.purchases.length).getValues()[0];
+      if (String(existing[1]) !== uid || String(existing[2]) !== productId) {
+        throw new Error("Watermark purchase token has already been claimed by another account.");
+      }
+    } else {
+      purchases.appendRow([tokenHash, uid, productId, 0, 0, purchase.purchaseTimeMillis || "", new Date().toISOString()]);
+      ss.getSheetByName("transactions").appendRow([
+        new Date().toISOString(), uid, "watermark", productId, 0, 0, "", tokenHash
+      ]);
+    }
     const wallet = getWalletRow_(uid, true);
     wallet[4] = true;
     wallet[5] = new Date().toISOString();
