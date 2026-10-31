@@ -18,6 +18,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 
@@ -70,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -402,14 +404,14 @@ fun CameraRiderScreen(
 
         // Creator watermark is visible in the preview for non-Premium users.
         if (!billingState.isPremium) {
-            Text(
-                text = "Created by CamRiderPro",
-                color = HudWhite.copy(alpha = 0.82f),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
+            Image(
+                painter = painterResource(id = com.example.R.drawable.watermark_camrider),
+                contentDescription = "CamRiderPro watermark",
+                alpha = 0.82f,
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 14.dp, bottom = if (isLandscape) 12.dp else 18.dp)
+                    .align(Alignment.BottomEnd)
+                    .width(if (isLandscape) 112.dp else 132.dp)
+                    .padding(end = 14.dp, bottom = if (isLandscape) 12.dp else 18.dp)
             )
         }
 
