@@ -559,11 +559,6 @@ fun CameraRiderScreen(
             MonetizationDialog(
                 state = billingState,
                 language = language,
-                onBuyPremium = {
-                    (context as? Activity)?.let {
-                        viewModel.billingManager.launchPurchase(it, BillingManager.PREMIUM_PRODUCT_ID)
-                    }
-                },
                 onBuyCredit = {
                     (context as? Activity)?.let {
                         viewModel.billingManager.launchPurchase(it, BillingManager.RECORDING_CREDIT_PRODUCT_ID)
