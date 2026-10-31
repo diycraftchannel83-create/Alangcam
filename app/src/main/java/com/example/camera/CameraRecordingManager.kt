@@ -94,7 +94,7 @@ class CameraRecordingManager(private val context: Context) {
     var onRecordingCreditUsed: ((Long) -> Unit)? = null
     var onRecordingLimitReached: ((Boolean) -> Unit)? = null
     private var activeRecording: Recording? = null
-    private var activeRecordingLimitSeconds = 120L
+    private var activeRecordingLimitSeconds = 20L * 60L
     private var activeRecordingUsesCredits = false
     private var lastBilledRecordingSeconds = 0L
     private var recordingLimitStopRequested = false
@@ -760,11 +760,11 @@ class CameraRecordingManager(private val context: Context) {
 
         if (activeRecording != null || _isRecording.value) return
 
-        // Free sessions are capped at 2 minutes. A purchased credit balance grants
-        // recording time equal to the remaining paid seconds, regardless of Premium.
+        // Free sessions are capped at 20 minutes. Purchased credit balances
+        // grant additional recording time.
         val availableCredits = recordingCreditSecondsProvider?.invoke()?.coerceAtLeast(0L) ?: 0L
         activeRecordingUsesCredits = availableCredits > 0L
-        activeRecordingLimitSeconds = if (activeRecordingUsesCredits) availableCredits else 120L
+        activeRecordingLimitSeconds = if (activeRecordingUsesCredits) availableCredits else 20L * 60L
         lastBilledRecordingSeconds = 0L
         recordingLimitStopRequested = false
 
