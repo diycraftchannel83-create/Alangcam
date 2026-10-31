@@ -162,8 +162,8 @@ export const heartbeatCreditRecording = onCall(
       const wallet = await tx.get(walletRef);
       const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
       if (balance < charge) {
-        tx.update(sessionRef, {status: "exhausted", finishedAt: now});
-        throw new HttpsError("resource-exhausted", "Recording credits exhausted.");
+        tx.update(sessionRef, {status: "exhausted", finishedAt: now, remainingSeconds: balance});
+        return {chargedSeconds: 0, remainingSeconds: balance, expired: true, exhausted: true};
       }
       const remaining = balance - charge;
       if (charge > 0) {
