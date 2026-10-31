@@ -423,53 +423,33 @@ class CameraRecordingManager(private val context: Context) {
 
         // LAYER 1: Futuristic Header Bar (Recording Status, Video Profile, GPS, Battery, Clock)
         // Left REC Pill
-        val recPill = RectF(margin, top, margin + 210f * scale, top + headerHeight)
-        drawPanel(recPill, 16f, red)
-        canvas.drawCircle(recPill.left + 22f * scale, top + 27f * scale, 7f * scale,
+        canvas.drawCircle(margin + 8f * scale, top + 24f * scale, 7f * scale,
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = red; setShadowLayer(10f * scale, 0f, 0f, red) })
-        drawText("● REC VIDEO", margin + 38f * scale, top + 34f * scale, 15f, red, true)
+        drawText("REC VIDEO", margin + 24f * scale, top + 34f * scale, 30f, red, true)
 
         // GPS + battery stack directly beneath the recording status pill.
-        val rightWidth = 240f * scale
+        val rightWidth = 320f * scale
         val gpsPanelTop = top + headerHeight + 5f * scale
-        val rightPanel = RectF(margin, gpsPanelTop, margin + rightWidth, gpsPanelTop + 38f * scale)
         val gpsColor = if (telemetry.isGpsFixed) green else yellow
-        drawPanel(rightPanel, 12f, gpsColor)
 
         val gpsLabel = if (telemetry.isGpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS..."
-        canvas.drawCircle(rightPanel.left + 18f * scale, gpsPanelTop + 19f * scale, 6f * scale,
+        canvas.drawCircle(margin + 8f * scale, gpsPanelTop + 16f * scale, 6f * scale,
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gpsColor; setShadowLayer(8f * scale, 0f, 0f, gpsColor) })
-        drawText(gpsLabel, rightPanel.left + 30f * scale, gpsPanelTop + 24f * scale, 11.5f, gpsColor, true)
-
-        // Battery stays on the same GPS row, aligned to the far right.
-        val battery = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
-        val level = battery?.getIntExtra("level", -1) ?: -1
-        val batteryScale = battery?.getIntExtra("scale", 100) ?: 100
-        val batteryText = if (level >= 0 && batteryScale > 0) "${level * 100 / batteryScale}%" else "100%"
-        val bx = rightPanel.right - 62f * scale
-        val by = gpsPanelTop + 9f * scale
-        val batteryOutline = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green; style = Paint.Style.STROKE; strokeWidth = 2.2f * scale }
-        canvas.drawRoundRect(RectF(bx, by, bx + 20f * scale, by + 18f * scale), 4f * scale, 4f * scale, batteryOutline)
-        canvas.drawRect(bx + 20f * scale, by + 5f * scale, bx + 24f * scale, by + 12f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
-        val fill = (level.coerceIn(0, 100) / 100f) * 14f
-        canvas.drawRect(bx + 3f * scale, by + 3f * scale, bx + (3f + fill) * scale, by + 15f * scale, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = green })
-        drawText(batteryText, bx + 29f * scale, gpsPanelTop + 24f * scale, 10.5f, green, true)
+        drawText(gpsLabel, margin + 22f * scale, gpsPanelTop + 24f * scale, 23f, gpsColor, true)
 
         // Video resolution / frame-rate indicator directly beneath GPS + battery.
-        val techHeight = 30f * scale
-        val techTop = gpsPanelTop + 43f * scale
-        val techPill = RectF(margin, techTop, margin + rightWidth, techTop + techHeight)
-        drawPanel(techPill, 8f, cyan)
+        val techHeight = 48f * scale
+        val techTop = gpsPanelTop + 40f * scale
         drawText(videoProfileLabelProvider?.invoke() ?: "1080p 60FPS H.265",
-            techPill.centerX(), techTop + 20f * scale, 11.5f, white, true, Paint.Align.CENTER)
+            margin, techTop + 30f * scale, 23f, white, true)
 
         // Compass HUD intentionally omitted from recorded video.
 
         // Telemetry dock remains on the left, below the GPS/video-profile stack.
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
         val telemTop = techTop + techHeight + 12f * scale
-        val telemWidth = 175f * scale
-        val telemHeight = 280f * scale
+        val telemWidth = 270f * scale
+        val telemHeight = 420f * scale
         val telemRect = RectF(margin, telemTop, margin + telemWidth, telemTop + telemHeight)
         drawPanel(telemRect, 14f, cyan)
 
@@ -501,15 +481,15 @@ class CameraRecordingManager(private val context: Context) {
                 5 -> green
                 else -> white
             }
-            drawText(item.first, margin + 12f * scale, slotY + 12f * scale, 11f, muted, true)
-            drawText(item.second, margin + 12f * scale, slotY + 28f * scale, 13.5f, valColor, true)
+            drawText(item.first, margin + 12f * scale, slotY + 22f * scale, 22f, muted, true)
+            drawText(item.second, margin + 12f * scale, slotY + 48f * scale, 27f, valColor, true)
             // Match the live preview: show the calendar date directly beneath the clock.
             // This is part of the TIME field and remains inside its existing telemetry slot.
             if (idx == 0 && overlayConfigProvider?.invoke()?.showDateTime != false) {
-                drawText(dateFormatted, margin + 12f * scale, slotY + 39f * scale, 9f, muted, false)
+                drawText(dateFormatted, margin + 12f * scale, slotY + 65f * scale, 18f, muted, false)
             }
             if (item.third.isNotEmpty()) {
-                drawText(item.third, margin + telemWidth - 12f * scale, slotY + 28f * scale, 10f, white, false, Paint.Align.RIGHT)
+                drawText(item.third, margin + telemWidth - 12f * scale, slotY + 48f * scale, 20f, white, false, Paint.Align.RIGHT)
             }
             if (idx < telemItems.size - 1) {
                 canvas.drawLine(
