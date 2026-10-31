@@ -43,6 +43,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.example.data.model.GpsTelemetry
 import com.example.data.model.OverlayConfig
 import com.example.data.model.VideoResolution
+import com.example.ui.uiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -436,7 +437,7 @@ class CameraRecordingManager(private val context: Context) {
         val gpsPanelTop = top + headerHeight + 5f * scale
         val gpsColor = if (telemetry.isGpsFixed) green else yellow
 
-        val gpsLabel = if (telemetry.isGpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS..."
+        val gpsLabel = if (telemetry.isGpsFixed) "${uiText(language, "GPS TERKUNCI", "GPS LOCK")} (${telemetry.satellitesCount})" else uiText(language, "MENCARI GPS...", "SEARCHING GPS...")
         canvas.drawCircle(margin + 8f * scale, gpsPanelTop + 16f * scale, 6f * scale,
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = gpsColor; setShadowLayer(8f * scale, 0f, 0f, gpsColor) })
         drawText(gpsLabel, margin + 22f * scale, gpsPanelTop + 24f * scale, 23f, gpsColor, true)
@@ -483,10 +484,10 @@ class CameraRecordingManager(private val context: Context) {
         val avgFormatted = "${(telemetry.avgSpeedKmh * unitMultiplier).toInt()} $unit"
 
         val telemItems = listOf(
-            Triple(if (language == "en") "TIME" else "WAKTU", timeFormatted, ""),
-            Triple(if (language == "en") "COORDINATES" else "KOORDINAT", coordFormatted, ""),
-            Triple(if (language == "en") "ALTITUDE" else "ELEVASI", altFormatted, if (telemetry.isGpsFixed) "FIX" else "--"),
-            Triple(if (language == "en") "DISTANCE" else "JARAK", distFormatted, ""),
+            Triple(uiText(language, "WAKTU", "TIME"), timeFormatted, ""),
+            Triple(uiText(language, "KOORDINAT", "COORDINATES"), coordFormatted, ""),
+            Triple(uiText(language, "ELEVASI", "ALTITUDE"), altFormatted, if (telemetry.isGpsFixed) uiText(language, "TERKUNCI", "FIX") else "--"),
+            Triple(uiText(language, "JARAK", "DISTANCE"), distFormatted, ""),
             Triple(when (language) {
                 "id" -> "KECEPATAN MAKS"
                 "ms" -> "KELAJUAN MAKS"
@@ -497,9 +498,9 @@ class CameraRecordingManager(private val context: Context) {
                 "zh" -> "最高速度"
                 "ko" -> "최고 속도"
                 "ar" -> "السرعة القصوى"
-                else -> "MAX SPEED"
+                else -> uiText(language, "KECEPATAN MAKS", "MAX SPEED")
             }, maxFormatted, ""),
-            Triple(if (language == "en") "AVERAGE" else "RATA-RATA", avgFormatted, "")
+            Triple(uiText(language, "RATA-RATA", "AVERAGE"), avgFormatted, "")
         )
 
         val slotHeight = (telemHeight - 16f * scale) / telemItems.size
