@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 data class BillingUiState(
     val isConnected: Boolean = false,
@@ -28,7 +27,7 @@ data class BillingUiState(
  * Play Billing client. Purchases are verified and credited by Firebase Cloud Functions.
  * The client never writes a credit balance locally.
  */
-class BillingManager(context: Context) : PurchasesUpdatedListener {
+class BillingManager(context: Context, private val creditRepository: FirebaseCreditRepository = FirebaseCreditRepository()) : PurchasesUpdatedListener {
     companion object {
         private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
@@ -43,7 +42,6 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("camriderpro_billing", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val creditRepository = FirebaseCreditRepository()
     private val processingTokens = mutableSetOf<String>()
 
     private val _state = MutableStateFlow(
@@ -234,9 +232,6 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                     isPremium = true,
                     message = "Pembelian berhasil diverifikasi. Kredit sedang disinkronkan ke saldo akun."
                 )
-                withContext(Dispatchers.IO) {
-                    // No local balance mutation: Firestore listener is the only balance source.
-                }
                 val consume = ConsumeParams.newBuilder().setPurchaseToken(token).build()
                 billingClient.consumeAsync(consume) { consumeResult, _ ->
                     if (consumeResult.responseCode != BillingClient.BillingResponseCode.OK) {
