@@ -174,13 +174,13 @@ private fun VerticalStatItem(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor.copy(alpha = 0.85f),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(15.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = label,
                 color = HudMuted,
-                fontSize = 18.sp,
+                fontSize = 13.5.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = RajdhaniFontFamily,
                 letterSpacing = 0.2.sp,
@@ -190,7 +190,7 @@ private fun VerticalStatItem(
         Text(
             text = value,
             color = accentColor,
-            fontSize = 21.sp,
+            fontSize = 15.75.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = OrbitronFontFamily,
             letterSpacing = 0.sp,
@@ -200,7 +200,7 @@ private fun VerticalStatItem(
             Text(
                 text = subText,
                 color = HudWhite.copy(alpha = 0.55f),
-                fontSize = 15.sp,
+                fontSize = 11.25.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = FontFamily.Monospace,
                 maxLines = 1
