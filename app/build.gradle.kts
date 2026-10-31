@@ -17,8 +17,8 @@ android {
     minSdk = 24
     targetSdk = 36
     // Version 2 is already uploaded to Play Console. Increment for the next upload.
-    versionCode = 3
-    versionName = "1.0.2"
+    versionCode = 4
+    versionName = "1.0.5"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
