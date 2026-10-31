@@ -63,7 +63,8 @@ fun TelemetryVideoBannerOverlay(
     speedUnit: SpeedUnit,
     overlayConfig: OverlayConfig,
     modifier: Modifier = Modifier,
-    language: String = "id"
+    language: String = "id",
+    isLandscape: Boolean = false
 ) {
     var timePart by remember {
         mutableStateOf(SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date()))
@@ -87,13 +88,13 @@ fun TelemetryVideoBannerOverlay(
     // Narrow vertical telemetry dock to preserve more camera view.
     Box(
         modifier = modifier
-            .width(160.dp)
+            .width(if (isLandscape) 148.dp else 160.dp)
             .padding(horizontal = 5.dp, vertical = 5.dp)
             .testTag("telemetry_video_banner")
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(if (isLandscape) 1.dp else 3.dp)
         ) {
             VerticalStatItem(
                 icon = Icons.Default.CalendarToday,
@@ -174,13 +175,13 @@ private fun VerticalStatItem(
                 imageVector = icon,
                 contentDescription = null,
                 tint = accentColor.copy(alpha = 0.85f),
-                modifier = Modifier.size(15.dp)
+                modifier = Modifier.size(if (isLandscape) 12.dp else 15.dp)
             )
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(if (isLandscape) 3.dp else 4.dp))
             Text(
                 text = label,
                 color = HudMuted,
-                fontSize = 13.5.sp,
+                fontSize = if (isLandscape) 10.5.sp else 13.5.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = RajdhaniFontFamily,
                 letterSpacing = 0.2.sp,
@@ -190,7 +191,7 @@ private fun VerticalStatItem(
         Text(
             text = value,
             color = accentColor,
-            fontSize = 15.75.sp,
+            fontSize = if (isLandscape) 12.sp else 15.75.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = OrbitronFontFamily,
             letterSpacing = 0.sp,
@@ -200,7 +201,7 @@ private fun VerticalStatItem(
             Text(
                 text = subText,
                 color = HudWhite.copy(alpha = 0.55f),
-                fontSize = 11.25.sp,
+                fontSize = if (isLandscape) 9.sp else 11.25.sp,
                 fontWeight = FontWeight.Medium,
                 fontFamily = FontFamily.Monospace,
                 maxLines = 1
