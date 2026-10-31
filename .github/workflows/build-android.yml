@@ -96,21 +96,21 @@ jobs:
           shopt -s nullglob
           apks=(app/build/outputs/apk/release/*.apk)
           aabs=(app/build/outputs/bundle/release/*.aab)
-          mapping=(app/build/outputs/mapping/release/mapping.txt)
-          native_symbols=(app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip)
+          mapping_file="app/build/outputs/mapping/release/mapping.txt"
+          native_symbols_file="app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip"
           (( ${#apks[@]} > 0 )) || { echo "::error::Release APK was not generated"; exit 1; }
           (( ${#aabs[@]} > 0 )) || { echo "::error::Release AAB was not generated"; exit 1; }
           cp "${apks[0]}" release-output/CamRiderPro-release.apk
           cp "${aabs[0]}" release-output/CamRiderPro-release.aab
-          if (( ${#mapping[@]} > 0 )); then
-            cp "${mapping[0]}" release-output/mapping.txt
+          if [[ -s "$mapping_file" ]]; then
+            cp "$mapping_file" release-output/mapping.txt
           else
             echo "::warning::R8 mapping.txt was not generated."
           fi
-          if (( ${#native_symbols[@]} > 0 )); then
-            cp "${native_symbols[0]}" release-output/native-debug-symbols.zip
+          if [[ -s "$native_symbols_file" ]]; then
+            cp "$native_symbols_file" release-output/native-debug-symbols.zip
           else
-            echo "::warning::No separate native symbols ZIP was emitted; check whether dependency symbols were already stripped."
+            echo "::warning::No separate native symbols ZIP was emitted; APK/AAB build remains valid. Check bundletool/AGP native symbol packaging if Play Console still requests symbols."
           fi
           ls -lh release-output
 
