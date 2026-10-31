@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "880959103871",
+    "project_id": "camriderpro",
+    "storage_bucket": "camriderpro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880959103871:android:e0403c47951c18604df04a",
+        "android_client_info": {
+          "package_name": "com.winsmediatama.camriderpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCIEnhtYB7P2KhFb92u26bK3XfiQQjDV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
