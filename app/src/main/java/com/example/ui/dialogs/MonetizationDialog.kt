@@ -38,6 +38,8 @@ fun MonetizationDialog(
     language: String,
     onBuyPremium: () -> Unit,
     onBuyCredit: () -> Unit,
+    onBuyCredit2Hours: () -> Unit,
+    onBuyCredit5Hours: () -> Unit,
     onRefresh: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -143,6 +145,24 @@ fun MonetizationDialog(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onBuyCredit2Hours,
+                    enabled = state.isConnected && state.credit2Price != "—" && state.credit2Price != "Belum tersedia",
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = Color.Black)
+                ) {
+                    Text("${uiText(language, "TOP UP 2.000 KREDIT • 2 JAM", "TOP UP 2,000 CREDITS • 2 HOURS")} • ${state.credit2Price}", fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onBuyCredit5Hours,
+                    enabled = state.isConnected && state.credit5Price != "—" && state.credit5Price != "Belum tersedia",
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
+                ) {
+                    Text("${uiText(language, "TOP UP 5.000 KREDIT • 5 JAM", "TOP UP 5,000 CREDITS • 5 HOURS")} • ${state.credit5Price}", fontWeight = FontWeight.Bold)
+                }
                 state.message?.let {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(it, color = NeonYellow, fontSize = 11.sp)
