@@ -435,9 +435,15 @@ fun SettingsDialog(
                     OverlayToggleItem(uiText(language, "Tanggal & Waktu Real-Time", "Real-Time Date & Time"), overlayConfig.showDateTime) {
                         onOverlayConfigChange(overlayConfig.copy(showDateTime = it))
                     }
-                    OverlayToggleItem(uiText(language, "Watermark Logo RiderCam", "RiderCam Logo Watermark"), overlayConfig.showWatermark) {
-                        onOverlayConfigChange(overlayConfig.copy(showWatermark = it))
-                    }
+                    Text(
+                        text = uiText(
+                            language,
+                            "Watermark otomatis tampil pada akun Free dan hanya dihapus setelah Premium Lifetime dibeli.",
+                            "Watermark is automatically shown on Free accounts and is removed only after Premium Lifetime is purchased."
+                        ),
+                        fontSize = 11.sp,
+                        color = HudMuted
+                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
