@@ -45,7 +45,7 @@ fun MonetizationDialog(
     val isId = language == "id"
     val creditHours = state.creditSeconds / 3600L
     val creditMinutes = (state.creditSeconds % 3600L) / 60L
-    val creditUnits = (state.creditSeconds * 1000L) / 3600L
+    
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -64,19 +64,19 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = uiText(language, "SALDO KREDIT REKAM", "RECORDING CREDIT BALANCE"),
+                    text = uiText(language, "SISA WAKTU REKAM", "REMAINING RECORDING TIME"),
                     color = HudMuted,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = String.format("%,d", creditUnits),
+                    text = String.format("%02d:%02d", creditHours, creditMinutes),
                     color = NeonGreen,
                     fontSize = 30.sp,
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = String.format("%02d:%02d %s", creditHours, creditMinutes, uiText(language, "jam tersisa", "hours remaining")),
+                    text = uiText(language, "jam tersisa", "hours remaining"),
                     color = HudMuted,
                     fontSize = 11.sp
                 )
@@ -90,7 +90,7 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = uiText(language, "KREDIT REKAM • 1.000 KREDIT", "RECORDING CREDIT • 1,000 CREDITS"),
+                    text = uiText(language, "PAKET KREDIT REKAM", "RECORDING CREDIT PACKAGES"),
                     color = HudWhite,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -108,7 +108,7 @@ fun MonetizationDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
                 ) {
                     Text(
-                        text = "${uiText(language, "TOP UP 1.000 KREDIT", "TOP UP 1,000 CREDITS")} • ${state.creditPrice}",
+                        text = "${uiText(language, "1.000 KREDIT • 2 JAM", "1,000 CREDITS • 2 HOURS")} • ${state.creditPrice}",
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -120,7 +120,7 @@ fun MonetizationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = Color.Black)
                 ) {
-                    Text("${uiText(language, "TOP UP 2.000 KREDIT • 2 JAM", "TOP UP 2,000 CREDITS • 2 HOURS")} • ${state.credit2Price}", fontWeight = FontWeight.Bold)
+                    Text("${uiText(language, "2.000 KREDIT • 4 JAM", "2,000 CREDITS • 4 HOURS")} • ${state.credit2Price}", fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
@@ -129,7 +129,7 @@ fun MonetizationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
                 ) {
-                    Text("${uiText(language, "TOP UP 5.000 KREDIT • 5 JAM", "TOP UP 5,000 CREDITS • 5 HOURS")} • ${state.credit5Price}", fontWeight = FontWeight.Bold)
+                    Text("${uiText(language, "5.000 KREDIT • 11 JAM", "5,000 CREDITS • 11 HOURS")} • ${state.credit5Price}", fontWeight = FontWeight.Bold)
                 }
                 state.message?.let {
                     Spacer(modifier = Modifier.height(10.dp))
