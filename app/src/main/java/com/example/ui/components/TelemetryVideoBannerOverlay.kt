@@ -101,7 +101,8 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "WAKTU", "TIME"),
                 value = timePart,
                 subText = datePart,
-                accentColor = HudWhite
+                accentColor = HudWhite,
+            isLandscape = isLandscape
             )
 
             HorizontalDivider()
@@ -112,7 +113,8 @@ fun TelemetryVideoBannerOverlay(
                     label = uiText(language, "KOORDINAT", "COORDINATES"),
                     value = String.format(Locale.US, "%.4f°", telemetry.latitude),
                     subText = String.format(Locale.US, "%.4f°", telemetry.longitude),
-                    accentColor = NeonCyan
+                    accentColor = NeonCyan,
+                isLandscape = isLandscape
                 )
                 HorizontalDivider()
             }
@@ -122,7 +124,8 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "ELEVASI", "ALTITUDE"),
                 value = "${telemetry.altitudeMeters.toInt()} M",
                 subText = if (telemetry.isGpsFixed) "GPS LOCK" else "NO FIX",
-                accentColor = HudWhite
+                accentColor = HudWhite,
+            isLandscape = isLandscape
             )
 
             HorizontalDivider()
@@ -132,7 +135,8 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "JARAK", "DISTANCE"),
                 value = String.format(Locale.US, "%.2f KM", telemetry.distanceKm),
                 subText = uiText(language, "TOTAL PERJALANAN", "TOTAL TRIP"),
-                accentColor = NeonYellow
+                accentColor = NeonYellow,
+            isLandscape = isLandscape
             )
 
             HorizontalDivider()
@@ -142,7 +146,8 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "KECEPATAN MAKS", "MAX SPEED"),
                 value = "$max ${speedUnit.label.uppercase()}",
                 subText = uiText(language, "REKOR TERTINGGI", "PEAK RECORD"),
-                accentColor = NeonAmber
+                accentColor = NeonAmber,
+            isLandscape = isLandscape
             )
 
             HorizontalDivider()
@@ -152,7 +157,8 @@ fun TelemetryVideoBannerOverlay(
                 label = uiText(language, "RATA-RATA", "AVERAGE"),
                 value = "$avg ${speedUnit.label.uppercase()}",
                 subText = "AVG SPEED",
-                accentColor = NeonGreen
+                accentColor = NeonGreen,
+            isLandscape = isLandscape
             )
         }
     }
@@ -164,7 +170,8 @@ private fun VerticalStatItem(
     label: String,
     value: String,
     subText: String,
-    accentColor: Color
+    accentColor: Color,
+    isLandscape: Boolean = false
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
