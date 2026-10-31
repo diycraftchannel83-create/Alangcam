@@ -157,18 +157,27 @@ fun SettingsDialog(
                 SettingsSectionHeader(if (language == "id") "BAHASA APLIKASI" else "APP LANGUAGE", Icons.Default.Settings)
                 SettingsCard {
                     Text(if (language == "id") "Pilih Bahasa" else "Choose Language", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
-                        listOf("id" to "Indonesia", "en" to "English").forEach { (code, label) ->
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .background(if (language == code) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
-                                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
-                                    .clickable { onLanguageChange(code) }
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (language == code) Color.Black else HudWhite)
+                    Column(verticalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.padding(top = 8.dp)) {
+                        listOf(
+                            "id" to "Indonesia", "en" to "English", "ms" to "Malaysia",
+                            "ja" to "日本語", "ru" to "Русский", "th" to "ไทย",
+                            "vi" to "Tiếng Việt", "zh" to "中文", "ko" to "한국어", "ar" to "العربية"
+                        ).chunked(2).forEach { languageRow ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                languageRow.forEach { (code, label) ->
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .background(if (language == code) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
+                                            .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
+                                            .clickable { onLanguageChange(code) }
+                                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (language == code) Color.Black else HudWhite)
+                                    }
+                                }
+                                if (languageRow.size == 1) Spacer(Modifier.weight(1f))
                             }
                         }
                     }
