@@ -56,7 +56,7 @@ jobs:
           current_name = name_match.group(1)
 
           def parse_version(value):
-              match = re.fullmatch(r"v?(\d+)\\.(\d+)\\.(\d+)", value.strip())
+              match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", value.strip())
               return tuple(map(int, match.groups())) if match else None
 
           versions = []
