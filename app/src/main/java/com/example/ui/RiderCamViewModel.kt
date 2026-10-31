@@ -97,7 +97,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 "th" to "ตั้งค่าจำกัดความเร็วไว้ที่ $speedLimitKmh กิโลเมตรต่อชั่วโมง กรุณาลดความเร็ว",
                 "vi" to "Giới hạn tốc độ được đặt ở mức $speedLimitKmh ki-lô-mét một giờ. Vui lòng giảm tốc độ.",
                 "zh" to "限速设置为每小时 $speedLimitKmh 公里。请减速慢行。",
-                "ko" to "제한 속도는 시속 $speedLimitKmh킬로미터로 설정되어 있습니다. 속도를 줄여 주세요.",
+                "ko" to "제한 속도는 시속 ${speedLimitKmh}킬로미터로 설정되어 있습니다. 속도를 줄여 주세요.",
                 "ar" to "تم ضبط حد السرعة على $speedLimitKmh كيلومتر في الساعة. يرجى تخفيف السرعة."
             )
         )
