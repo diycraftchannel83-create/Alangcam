@@ -69,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -376,17 +377,18 @@ fun CameraRiderScreen(
                     .coerceIn(8.dp, (maxWidth - watermarkWidth - 8.dp).coerceAtLeast(8.dp))
                 val watermarkY = ((maxHeight * overlayConfig.speedometerYRatio) + gaugeHalf + 68.dp)
                     .coerceAtMost((maxHeight - 34.dp).coerceAtLeast(8.dp))
-                // A malformed or unsupported PNG must never crash the entire camera screen.
-                // Keep a readable brand fallback if Android cannot decode the optional watermark.
-                val watermarkPainter = try {
-                    painterResource(id = com.example.R.drawable.watermark_camrider)
-                } catch (error: Exception) {
-                    android.util.Log.e("CameraRiderScreen", "Unable to decode watermark_camrider", error)
-                    null
+                // Decode the PNG through Android BitmapFactory instead of Compose painterResource.
+                // painterResource can throw during composition for unsupported drawable formats.
+                val context = LocalContext.current
+                val watermarkBitmap = remember(context) {
+                    android.graphics.BitmapFactory.decodeResource(
+                        context.resources,
+                        com.example.R.drawable.watermark_camrider
+                    )
                 }
-                if (watermarkPainter != null) {
+                if (watermarkBitmap != null) {
                     Image(
-                        painter = watermarkPainter,
+                        bitmap = watermarkBitmap.asImageBitmap(),
                         contentDescription = "Alang Motor watermark",
                         alpha = 0.82f,
                         modifier = Modifier
