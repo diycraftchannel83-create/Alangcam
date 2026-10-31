@@ -39,11 +39,11 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
         private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
-        const val RECORDING_CREDIT_SECONDS = 60L * 60L
+        const val RECORDING_CREDIT_SECONDS = 2L * 60L * 60L
         const val RECORDING_CREDIT_2H_PRODUCT_ID = "2._2000_credit"
         const val RECORDING_CREDIT_5H_PRODUCT_ID = "5._5000_credit"
-        const val RECORDING_CREDIT_2H_SECONDS = 2L * 60L * 60L
-        const val RECORDING_CREDIT_5H_SECONDS = 5L * 60L * 60L
+        const val RECORDING_CREDIT_2H_SECONDS = 4L * 60L * 60L
+        const val RECORDING_CREDIT_5H_SECONDS = 11L * 60L * 60L
         private const val PREFS_NAME = "camriderpro_billing"
         private const val KEY_PREMIUM = "premium_owned"
         private const val KEY_CREDIT_SECONDS = "recording_credit_seconds"
@@ -204,10 +204,16 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                 billingClient.acknowledgePurchase(params) { }
             }
         }
-        val purchasedCreditSeconds = when {
-            RECORDING_CREDIT_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_SECONDS
-            RECORDING_CREDIT_2H_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_2H_SECONDS
-            RECORDING_CREDIT_5H_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_5H_SECONDS
+        val purchasedCredits = when {
+            RECORDING_CREDIT_PRODUCT_ID in purchase.products -> 1000
+            RECORDING_CREDIT_2H_PRODUCT_ID in purchase.products -> 2000
+            RECORDING_CREDIT_5H_PRODUCT_ID in purchase.products -> 5000
+            else -> 0
+        }
+        val purchasedCreditSeconds = when (purchasedCredits) {
+            1000 -> RECORDING_CREDIT_SECONDS
+            2000 -> RECORDING_CREDIT_2H_SECONDS
+            5000 -> RECORDING_CREDIT_5H_SECONDS
             else -> 0L
         }
         if (purchasedCreditSeconds > 0L) {
@@ -226,7 +232,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                 _state.value = _state.value.copy(
                     isPremium = true,
                     creditSeconds = newBalance,
-                    message = "${purchasedCreditSeconds / 3600L * 1000L} kredit (${purchasedCreditSeconds / 3600L} jam) berhasil ditambahkan. Watermark dihapus."
+                    message = "$purchasedCredits kredit (${purchasedCreditSeconds / 3600L} jam) berhasil ditambahkan. Watermark dihapus."
                 )
             }
 
