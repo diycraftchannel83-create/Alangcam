@@ -34,4 +34,11 @@ fit.thumbnail((344, 344), Image.Resampling.LANCZOS)
 foreground.alpha_composite(fit, ((432-fit.width)//2, (432-fit.height)//2))
 foreground.save(folder / "ic_launcher_art.png", optimize=True)
 
+# Also place the same foreground in the plain drawable directory. Adaptive icon XML
+# references @drawable/ic_launcher_art; this avoids resource discovery differences
+# across Android Gradle Plugin versions and source-set packaging.
+plain_drawable = RES / "drawable"
+plain_drawable.mkdir(parents=True, exist_ok=True)
+foreground.save(plain_drawable / "ic_launcher_art.png", optimize=True)
+
 print(f"Generated launcher icons from {SOURCE.name} ({Image.open(SOURCE).size[0]}x{Image.open(SOURCE).size[1]}).")
