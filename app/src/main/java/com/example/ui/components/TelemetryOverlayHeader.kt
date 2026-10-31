@@ -177,7 +177,7 @@ fun TelemetryOverlayHeader(
                     .fillMaxWidth()
                     .padding(horizontal = 2.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val gpsFixed = telemetry.isGpsFixed
