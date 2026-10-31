@@ -198,22 +198,7 @@ fun TelemetryOverlayHeader(
                         letterSpacing = 0.4.sp
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.BatteryFull,
-                        contentDescription = "Battery",
-                        tint = if (batteryPercentage > 20) NeonGreen else NeonRed,
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        text = "$batteryPercentage%",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HudWhite,
-                        fontFamily = RajdhaniFontFamily
-                    )
-                }
+
             }
 
             // Bottom: Keterangan Rekaman 1080p with matching column width
