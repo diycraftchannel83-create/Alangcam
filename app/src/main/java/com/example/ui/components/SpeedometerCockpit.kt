@@ -63,7 +63,6 @@ fun SpeedometerCockpit(
                 val cy = size.height / 2f
                 val r = size.minDimension * 0.44f
                 val track = size.minDimension * 0.024f
-                drawCircle(Color(0x73060C14), r + track * 1.8f, Offset(cx, cy))
                 drawArc(Color(0x401E2B40), 135f, 270f, false, Offset(cx-r,cy-r), Size(r*2,r*2),
                     style = Stroke(track, cap = StrokeCap.Round))
                 drawArc(NeonRed.copy(alpha=.5f), 135f+270f*.82f, 48.6f, false, Offset(cx-r,cy-r), Size(r*2,r*2),
