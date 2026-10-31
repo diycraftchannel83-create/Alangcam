@@ -24,10 +24,10 @@ data class BillingUiState(
 )
 
 /**
- * Play Billing client. Purchases are verified and credited by Firebase Cloud Functions.
+ * Play Billing client. Purchases are verified and credited by the Google Apps Script backend.
  * The client never writes a credit balance locally.
  */
-class BillingManager(context: Context, private val creditRepository: FirebaseCreditRepository = FirebaseCreditRepository()) : PurchasesUpdatedListener {
+class BillingManager(context: Context, private val creditRepository: AppsScriptCreditRepository = AppsScriptCreditRepository()) : PurchasesUpdatedListener {
     companion object {
         private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
@@ -45,7 +45,7 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
     private val processingTokens = mutableSetOf<String>()
 
     private val _state = MutableStateFlow(
-        BillingUiState(isPremium = prefs.getBoolean("premium_owned", false))
+        BillingUiState(isPremium = false)
     )
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
@@ -66,17 +66,14 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
                     if (wallet != null) {
                         _state.value = _state.value.copy(
                             creditSeconds = wallet.creditSeconds.coerceAtLeast(0L),
-                            isPremium = _state.value.isPremium || wallet.totalPurchasedSeconds > 0L
+                            isPremium = wallet.premiumOwned
                         )
-                        if (wallet.totalPurchasedSeconds > 0L) {
-                            prefs.edit().putBoolean("premium_owned", true).apply()
-                        }
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Firebase wallet initialization failed", e)
+                Log.e(TAG, "Apps Script wallet initialization failed", e)
                 _state.value = _state.value.copy(
-                    message = "Saldo kredit belum dapat disinkronkan. Periksa koneksi internet dan Firebase."
+                    message = "Saldo kredit belum dapat disinkronkan. Periksa koneksi internet dan konfigurasi backend."
                 )
             }
         }
@@ -200,16 +197,33 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
         if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
 
         if (LEGACY_WATERMARK_PRODUCT_ID in purchase.products) {
-            prefs.edit().putBoolean("premium_owned", true).apply()
-            _state.value = _state.value.copy(
-                isPremium = true,
-                message = "Watermark sudah terbuka dari pembelian sebelumnya."
-            )
-            if (!purchase.isAcknowledged) {
-                billingClient.acknowledgePurchase(
-                    AcknowledgePurchaseParams.newBuilder()
-                        .setPurchaseToken(purchase.purchaseToken).build()
-                ) { }
+            val token = purchase.purchaseToken
+            if (!processingTokens.add(token)) return
+            scope.launch {
+                try {
+                    creditRepository.signInAnonymouslyIfNeeded()
+                    val verified = creditRepository.verifyWatermarkPurchase(LEGACY_WATERMARK_PRODUCT_ID, token)
+                    if (!verified) throw IllegalStateException("Watermark entitlement was not confirmed by the server.")
+                    prefs.edit().putBoolean("premium_owned", true).apply()
+                    _state.value = _state.value.copy(
+                        isPremium = true,
+                        message = "Pembelian Remove Watermark berhasil diverifikasi."
+                    )
+                    if (!purchase.isAcknowledged) {
+                        billingClient.acknowledgePurchase(
+                            AcknowledgePurchaseParams.newBuilder().setPurchaseToken(token).build()
+                        ) { result ->
+                            if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                                _state.value = _state.value.copy(message = "Watermark aktif. Konfirmasi transaksi Play akan dicoba kembali.")
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Watermark purchase verification failed", e)
+                    _state.value = _state.value.copy(message = "Pembelian Remove Watermark belum dapat diverifikasi.")
+                } finally {
+                    processingTokens.remove(token)
+                }
             }
             return
         }
@@ -227,9 +241,7 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
                 // A server-verified and idempotent grant must succeed before consuming the Play token.
                 creditRepository.signInAnonymouslyIfNeeded()
                 creditRepository.verifyCreditPurchase(productId, token)
-                prefs.edit().putBoolean("premium_owned", true).apply()
                 _state.value = _state.value.copy(
-                    isPremium = true,
                     message = "Pembelian berhasil diverifikasi. Kredit sedang disinkronkan ke saldo akun."
                 )
                 val consume = ConsumeParams.newBuilder().setPurchaseToken(token).build()
@@ -254,12 +266,12 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
     /** Deprecated: credit deductions must now be performed by server recording sessions. */
     @Deprecated("Use Firebase recording session heartbeat; local credit deductions are disabled.")
     fun deductRecordingSeconds(seconds: Long) {
-        // Intentionally no-op. Firestore is the single source of truth for credit balance.
+        // Intentionally no-op. The Apps Script wallet is the single source of truth for credit balance.
     }
 
     fun close() {
         scope.cancel()
-        creditRepository.stopObserving()
+        creditRepository.close()
         if (billingClient.isReady) billingClient.endConnection()
     }
 }
