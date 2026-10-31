@@ -85,7 +85,16 @@ class CameraRecordingManager(private val context: Context) {
     var speedUnitLabelProvider: (() -> String)? = null
     var videoProfileLabelProvider: (() -> String)? = null
     var overlayConfigProvider: (() -> OverlayConfig)? = null
+    /** Premium removes only the watermark; it does not change recording duration limits. */
+    var premiumProvider: (() -> Boolean)? = null
+    var recordingCreditSecondsProvider: (() -> Long)? = null
+    var onRecordingCreditUsed: ((Long) -> Unit)? = null
+    var onRecordingLimitReached: ((Boolean) -> Unit)? = null
     private var activeRecording: Recording? = null
+    private var activeRecordingLimitSeconds = 120L
+    private var activeRecordingUsesCredits = false
+    private var lastBilledRecordingSeconds = 0L
+    private var recordingLimitStopRequested = false
 
     private var currentLensFacing = CameraSelector.LENS_FACING_BACK
     private var isTorchOn = false
@@ -615,6 +624,19 @@ class CameraRecordingManager(private val context: Context) {
         }
         }
 
+        // Free users see a small creator watermark in both the live HUD and encoded video.
+        // Premium Lifetime removes this mark only; recording limits remain unchanged.
+        if (premiumProvider?.invoke() != true) {
+            val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = AndroidColor.argb(205, 255, 255, 255)
+                textSize = 18f * scale
+                textAlign = Paint.Align.RIGHT
+                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                setShadowLayer(4f * scale, 0f, 1f * scale, AndroidColor.BLACK)
+            }
+            canvas.drawText("Created by CamRiderPro", w - margin, h - 18f * scale, watermarkPaint)
+        }
+
         // Bottom area remains empty, keeping road view completely unobstructed
         canvas.restoreToCount(save)
     }
@@ -689,11 +711,19 @@ class CameraRecordingManager(private val context: Context) {
 
         if (activeRecording != null || _isRecording.value) return
 
+        // Free sessions are capped at 2 minutes. A purchased credit balance grants
+        // recording time equal to the remaining paid seconds, regardless of Premium.
+        val availableCredits = recordingCreditSecondsProvider?.invoke()?.coerceAtLeast(0L) ?: 0L
+        activeRecordingUsesCredits = availableCredits > 0L
+        activeRecordingLimitSeconds = if (activeRecordingUsesCredits) availableCredits else 120L
+        lastBilledRecordingSeconds = 0L
+        recordingLimitStopRequested = false
+
         // Acquire WakeLock so recording is never suspended or interrupted
         try {
             val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
             wakeLock = pm?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "CamRiderPro:RecordingWakeLock")?.apply {
-                acquire(4 * 3600 * 1000L) // 4 hours maximum timeout
+                acquire((activeRecordingLimitSeconds.coerceAtMost(24L * 3600L) + 60L) * 1000L)
             }
         } catch (e: Exception) {
             Log.w("CameraRecordingManager", "WakeLock acquisition notice", e)
@@ -752,11 +782,31 @@ class CameraRecordingManager(private val context: Context) {
                 }
                 is VideoRecordEvent.Status -> {
                     val durationNanos = event.recordingStats.recordedDurationNanos
-                    _recordingDurationSeconds.value = durationNanos / 1_000_000_000L
+                    val durationSeconds = durationNanos / 1_000_000_000L
+                    _recordingDurationSeconds.value = durationSeconds
+
+                    if (activeRecordingUsesCredits) {
+                        val newlyUsedSeconds = durationSeconds - lastBilledRecordingSeconds
+                        if (newlyUsedSeconds > 0L) {
+                            onRecordingCreditUsed?.invoke(newlyUsedSeconds)
+                            lastBilledRecordingSeconds = durationSeconds
+                        }
+                    }
+
+                    if (!recordingLimitStopRequested && durationSeconds >= activeRecordingLimitSeconds) {
+                        recordingLimitStopRequested = true
+                        onRecordingLimitReached?.invoke(activeRecordingUsesCredits)
+                        activeRecording?.stop()
+                    }
                 }
                 is VideoRecordEvent.Finalize -> {
                     _isRecording.value = false
                     val duration = _recordingDurationSeconds.value
+                    if (activeRecordingUsesCredits && duration > lastBilledRecordingSeconds) {
+                        onRecordingCreditUsed?.invoke(duration - lastBilledRecordingSeconds)
+                    }
+                    activeRecordingUsesCredits = false
+                    recordingLimitStopRequested = false
                     if (!event.hasError()) {
                         val outputUri = event.outputResults.outputUri
                         onRecordingSaved?.invoke(outputUri.toString(), storageDisplayPath, duration)
