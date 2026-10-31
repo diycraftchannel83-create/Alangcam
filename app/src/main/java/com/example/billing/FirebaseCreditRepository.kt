@@ -3,6 +3,7 @@ package com.example.billing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ data class CreditWallet(
  */
 class FirebaseCreditRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance("asia-southeast2")
 ) {
     private val _wallet = MutableStateFlow<CreditWallet?>(null)
     val wallet: StateFlow<CreditWallet?> = _wallet.asStateFlow()
@@ -61,8 +63,9 @@ class FirebaseCreditRepository(
     }
 
     suspend fun reportCreditRecordingUsage(sessionId: String, elapsedSeconds: Long): Long {
-        val result = functions.getHttpsCallable("reportCreditRecordingUsage")
-            .call(mapOf("sessionId" to sessionId, "elapsedSeconds" to elapsedSeconds)).await()
+        // elapsedSeconds is intentionally ignored; the server measures time from its own timestamps.
+        val result = functions.getHttpsCallable("heartbeatCreditRecording")
+            .call(mapOf("sessionId" to sessionId)).await()
         val data = result.data as? Map<*, *> ?: emptyMap<Any, Any>()
         return (data["remainingSeconds"] as? Number)?.toLong() ?: 0L
     }
