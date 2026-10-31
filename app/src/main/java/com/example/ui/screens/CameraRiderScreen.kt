@@ -282,13 +282,14 @@ fun CameraRiderScreen(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 12.dp)
+                    .offset(y = if (isLandscape) (-18).dp else 0.dp)
             )
 
             // Left-side telemetry dock stays below the stacked status / GPS / video-profile header.
             Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(top = if (isLandscape) 108.dp else 116.dp, start = 12.dp),
+                    .padding(top = if (isLandscape) 76.dp else 116.dp, start = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TelemetryVideoBannerOverlay(
@@ -423,7 +424,7 @@ fun CameraRiderScreen(
             exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 8.dp, bottom = if (isLandscape) 46.dp else 54.dp)
+                .padding(end = if (isLandscape) 44.dp else 8.dp, bottom = if (isLandscape) 46.dp else 54.dp)
         ) {
             HandlebarControlBar(
                 isRecording = isRecording,
