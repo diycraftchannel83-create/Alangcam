@@ -1,5 +1,5 @@
 import {initializeApp} from "firebase-admin/app";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {getFirestore, FieldValue, Timestamp} from "firebase-admin/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 import {google} from "googleapis";
@@ -9,6 +9,9 @@ initializeApp();
 const db = getFirestore();
 const playServiceAccount = defineSecret("PLAY_SERVICE_ACCOUNT_JSON");
 const packageName = "com.winsmediatama.camriderpro";
+const FUNCTION_REGION = "asia-southeast2";
+const MAX_HEARTBEAT_GAP_SECONDS = 45;
+const MAX_CHARGE_PER_HEARTBEAT_SECONDS = 30;
 
 const PRODUCTS: Record<string, {credits: number; seconds: number}> = {
   "1._1000_credit": {credits: 1000, seconds: 2 * 60 * 60},
@@ -34,12 +37,9 @@ async function playPublisher() {
   return google.androidpublisher({version: "v3", auth});
 }
 
-/**
- * Verify an INAPP purchase against Google Play before adding the wallet balance.
- * A purchase token is globally unique; its SHA-256 hash is used as an idempotency key.
- */
+/** Verify the purchase with Google Play before crediting the server wallet. */
 export const verifyCreditPurchase = onCall(
-  {secrets: [playServiceAccount], timeoutSeconds: 60},
+  {region: FUNCTION_REGION, secrets: [playServiceAccount], timeoutSeconds: 60, maxInstances: 5},
   async (request) => {
     const uid = requireUid(request);
     const productId = String(request.data?.productId ?? "");
@@ -55,11 +55,8 @@ export const verifyCreditPurchase = onCall(
       token: purchaseToken,
     });
     const purchase = response.data;
-    if (purchase.purchaseState !== 0) {
-      throw new HttpsError("failed-precondition", "Purchase is not completed.");
-    }
-    if (purchase.acknowledgementState !== 1 && purchase.consumptionState !== 1) {
-      // Delivery is granted before the purchase is consumed; the app retries consume.
+    if (purchase.purchaseState !== 0 || purchase.productId !== productId) {
+      throw new HttpsError("failed-precondition", "Purchase is not completed or product does not match.");
     }
 
     const tokenHash = hashToken(purchaseToken);
@@ -81,11 +78,11 @@ export const verifyCreditPurchase = onCall(
       const wallet = await tx.get(walletRef);
       const current = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
       const purchasedTotal = wallet.exists ? Number(wallet.get("totalPurchasedSeconds") ?? 0) : 0;
-      tx.set(tokenRef, {
+      tx.create(tokenRef, {
         uid, productId, purchaseTime: purchase.purchaseTimeMillis ?? null,
         createdAt: FieldValue.serverTimestamp(),
       });
-      tx.set(txRef, {
+      tx.create(txRef, {
         uid, type: "purchase", productId,
         credits: packageInfo.credits, creditSeconds: packageInfo.seconds,
         createdAt: FieldValue.serverTimestamp(),
@@ -104,93 +101,139 @@ export const verifyCreditPurchase = onCall(
   }
 );
 
-/**
- * Atomically reserve and debit the wallet when starting a paid recording.
- * Client must supply a random idempotency key and report elapsed usage with the session.
- */
-export const startCreditRecording = onCall(async (request) => {
-  const uid = requireUid(request);
-  const sessionId = String(request.data?.sessionId ?? "");
-  if (!/^[A-Za-z0-9_-]{16,80}$/.test(sessionId)) {
-    throw new HttpsError("invalid-argument", "Invalid session ID.");
+/** Create an authenticated recording session; the server owns all timing and billing. */
+export const startCreditRecording = onCall(
+  {region: FUNCTION_REGION, maxInstances: 10},
+  async (request) => {
+    const uid = requireUid(request);
+    const sessionId = String(request.data?.sessionId ?? "");
+    if (!/^[A-Za-z0-9_-]{16,80}$/.test(sessionId)) {
+      throw new HttpsError("invalid-argument", "Invalid session ID.");
+    }
+    const now = Timestamp.now();
+    const sessionRef = db.collection("recording_sessions").doc(sessionId);
+    const walletRef = db.collection("credit_wallets").doc(uid);
+
+    return db.runTransaction(async (tx) => {
+      const existing = await tx.get(sessionRef);
+      if (existing.exists) {
+        if (existing.get("uid") !== uid) throw new HttpsError("permission-denied", "Session mismatch.");
+        if (existing.get("status") !== "active") throw new HttpsError("failed-precondition", "Session is not active.");
+        return {sessionId, remainingSeconds: existing.get("remainingSeconds") ?? 0};
+      }
+      const wallet = await tx.get(walletRef);
+      const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
+      if (balance <= 0) throw new HttpsError("failed-precondition", "No recording credits.");
+      tx.create(sessionRef, {
+        uid, startedAt: now, lastHeartbeatAt: now,
+        remainingSeconds: balance, status: "active",
+      });
+      return {sessionId, remainingSeconds: balance};
+    });
   }
-  const sessionRef = db.collection("recording_sessions").doc(sessionId);
-  const walletRef = db.collection("credit_wallets").doc(uid);
-
-  return db.runTransaction(async (tx) => {
-    const existing = await tx.get(sessionRef);
-    if (existing.exists) {
-      if (existing.get("uid") !== uid) throw new HttpsError("permission-denied", "Session mismatch.");
-      return {sessionId, remainingSeconds: existing.get("remainingSeconds") ?? 0};
-    }
-    const wallet = await tx.get(walletRef);
-    const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
-    if (balance <= 0) throw new HttpsError("failed-precondition", "No recording credits.");
-    tx.create(sessionRef, {
-      uid, startedAt: FieldValue.serverTimestamp(),
-      lastHeartbeatAt: FieldValue.serverTimestamp(),
-      remainingSeconds: balance, status: "active",
-    });
-    return {sessionId, remainingSeconds: balance};
-  });
-});
+);
 
 /**
- * Reports usage as a monotonic cumulative duration. Each session is billed only for
- * the increase since lastReportedSeconds; retries cannot double-charge.
+ * Charge time using server timestamps only. Client-provided elapsed seconds are never trusted.
+ * The app should call this every ~15 seconds. A gap over 45 seconds expires the session.
  */
-export const reportCreditRecordingUsage = onCall(async (request) => {
-  const uid = requireUid(request);
-  const sessionId = String(request.data?.sessionId ?? "");
-  const reportedSeconds = Number(request.data?.elapsedSeconds);
-  if (!/^[A-Za-z0-9_-]{16,80}$/.test(sessionId) ||
-      !Number.isSafeInteger(reportedSeconds) || reportedSeconds < 0) {
-    throw new HttpsError("invalid-argument", "Invalid recording usage.");
+export const heartbeatCreditRecording = onCall(
+  {region: FUNCTION_REGION, maxInstances: 10},
+  async (request) => {
+    const uid = requireUid(request);
+    const sessionId = String(request.data?.sessionId ?? "");
+    if (!/^[A-Za-z0-9_-]{16,80}$/.test(sessionId)) {
+      throw new HttpsError("invalid-argument", "Invalid session ID.");
+    }
+    const now = Timestamp.now();
+    const sessionRef = db.collection("recording_sessions").doc(sessionId);
+    const walletRef = db.collection("credit_wallets").doc(uid);
+
+    return db.runTransaction(async (tx) => {
+      const session = await tx.get(sessionRef);
+      if (!session.exists || session.get("uid") !== uid || session.get("status") !== "active") {
+        throw new HttpsError("failed-precondition", "Recording session is not active.");
+      }
+      const last = session.get("lastHeartbeatAt") as Timestamp | undefined;
+      if (!last) throw new HttpsError("failed-precondition", "Session timestamp is missing.");
+      const elapsed = Math.max(0, Math.floor((now.toMillis() - last.toMillis()) / 1000));
+      const expired = elapsed > MAX_HEARTBEAT_GAP_SECONDS;
+      const charge = Math.min(elapsed, MAX_CHARGE_PER_HEARTBEAT_SECONDS);
+      const wallet = await tx.get(walletRef);
+      const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
+      if (balance < charge) {
+        tx.update(sessionRef, {status: "exhausted", finishedAt: now});
+        throw new HttpsError("resource-exhausted", "Recording credits exhausted.");
+      }
+      const remaining = balance - charge;
+      if (charge > 0) {
+        tx.update(walletRef, {
+          creditSeconds: remaining,
+          totalUsedSeconds: FieldValue.increment(charge),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        tx.create(db.collection("credit_transactions").doc(
+          sessionId + "_" + now.toMillis()
+        ), {
+          uid, type: "usage", sessionId, creditSeconds: -charge,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      tx.update(sessionRef, {
+        lastHeartbeatAt: now,
+        remainingSeconds: remaining,
+        status: expired ? "expired" : "active",
+        ...(expired ? {finishedAt: now} : {}),
+      });
+      return {chargedSeconds: charge, remainingSeconds: remaining, expired};
+    });
   }
-  const sessionRef = db.collection("recording_sessions").doc(sessionId);
-  const walletRef = db.collection("credit_wallets").doc(uid);
-  const txRef = db.collection("credit_transactions").doc(sessionId + "_" + reportedSeconds);
+);
 
-  return db.runTransaction(async (tx) => {
-    const session = await tx.get(sessionRef);
-    if (!session.exists || session.get("uid") !== uid || session.get("status") !== "active") {
-      throw new HttpsError("failed-precondition", "Recording session is not active.");
+/** Final server-side charge when the user stops recording normally. */
+export const finishCreditRecording = onCall(
+  {region: FUNCTION_REGION, maxInstances: 10},
+  async (request) => {
+    const uid = requireUid(request);
+    const sessionId = String(request.data?.sessionId ?? "");
+    if (!/^[A-Za-z0-9_-]{16,80}$/.test(sessionId)) {
+      throw new HttpsError("invalid-argument", "Invalid session ID.");
     }
-    const previous = Number(session.get("lastReportedSeconds") ?? 0);
-    if (reportedSeconds <= previous) return {chargedSeconds: 0, remainingSeconds: session.get("remainingSeconds")};
-    const charge = reportedSeconds - previous;
-    const wallet = await tx.get(walletRef);
-    const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
-    if (balance < charge) throw new HttpsError("resource-exhausted", "Recording credits exhausted.");
-    const remaining = balance - charge;
-    tx.update(walletRef, {
-      creditSeconds: remaining,
-      totalUsedSeconds: FieldValue.increment(charge),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    tx.update(sessionRef, {
-      lastReportedSeconds: reportedSeconds,
-      remainingSeconds: remaining,
-      lastHeartbeatAt: FieldValue.serverTimestamp(),
-    });
-    tx.set(txRef, {
-      uid, type: "usage", sessionId, creditSeconds: -charge,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-    return {chargedSeconds: charge, remainingSeconds: remaining};
-  });
-});
+    const now = Timestamp.now();
+    const sessionRef = db.collection("recording_sessions").doc(sessionId);
+    const walletRef = db.collection("credit_wallets").doc(uid);
 
-export const finishCreditRecording = onCall(async (request) => {
-  const uid = requireUid(request);
-  const sessionId = String(request.data?.sessionId ?? "");
-  const sessionRef = db.collection("recording_sessions").doc(sessionId);
-  await db.runTransaction(async (tx) => {
-    const session = await tx.get(sessionRef);
-    if (!session.exists || session.get("uid") !== uid) return;
-    if (session.get("status") === "active") {
-      tx.update(sessionRef, {status: "finished", finishedAt: FieldValue.serverTimestamp()});
-    }
-  });
-  return {finished: true};
-});
+    return db.runTransaction(async (tx) => {
+      const session = await tx.get(sessionRef);
+      if (!session.exists || session.get("uid") !== uid) {
+        throw new HttpsError("not-found", "Recording session not found.");
+      }
+      if (session.get("status") !== "active") {
+        return {finished: true, remainingSeconds: session.get("remainingSeconds") ?? 0};
+      }
+      const last = session.get("lastHeartbeatAt") as Timestamp | undefined;
+      const elapsed = last ? Math.max(0, Math.floor((now.toMillis() - last.toMillis()) / 1000)) : 0;
+      const charge = Math.min(elapsed, MAX_CHARGE_PER_HEARTBEAT_SECONDS);
+      const wallet = await tx.get(walletRef);
+      const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
+      if (balance < charge) throw new HttpsError("resource-exhausted", "Recording credits exhausted.");
+      const remaining = balance - charge;
+      if (charge > 0) {
+        tx.update(walletRef, {
+          creditSeconds: remaining,
+          totalUsedSeconds: FieldValue.increment(charge),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+        tx.create(db.collection("credit_transactions").doc(sessionId + "_finish"), {
+          uid, type: "usage", sessionId, creditSeconds: -charge,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
+      tx.update(sessionRef, {
+        status: "finished", finishedAt: now,
+        lastHeartbeatAt: now, remainingSeconds: remaining,
+      });
+      return {finished: true, chargedSeconds: charge, remainingSeconds: remaining};
+    });
+  }
+);
