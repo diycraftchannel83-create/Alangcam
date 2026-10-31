@@ -111,15 +111,15 @@ fun SpeedometerCockpit(
             }
             Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
                 Text(animatedSpeed.toInt().toString(),color=HudWhite,
-                    fontSize=if(isLandscape)36.sp else 42.sp,fontWeight=FontWeight.Bold,
+                    fontSize=if(isLandscape)72.sp else 84.sp,fontWeight=FontWeight.Bold,
                     fontFamily=OrbitronFontFamily,letterSpacing=.5.sp)
-                Text(speedUnit.label.uppercase(),color=NeonCyan,fontSize=10.sp,
+                Text(speedUnit.label.uppercase(),color=NeonCyan,fontSize=20.sp,
                     fontWeight=FontWeight.Bold,fontFamily=RajdhaniFontFamily,letterSpacing=1.sp)
             }
         }
         if (showGearRpm) {
             val gear=if(telemetry.gear.isNotEmpty()&&telemetry.gear!="--") "GEAR ${telemetry.gear} • ${telemetry.rpm} RPM" else "GEAR / RPM --"
-            Text(gear,color=NeonGreen,fontSize=11.sp,fontWeight=FontWeight.Bold,fontFamily=RajdhaniFontFamily)
+            Text(gear,color=NeonGreen,fontSize=22.sp,fontWeight=FontWeight.Bold,fontFamily=RajdhaniFontFamily)
         }
     }
 }
