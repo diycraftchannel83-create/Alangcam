@@ -398,23 +398,18 @@ class CameraRecordingManager(private val context: Context) {
         ) {
             val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 this.color = color
-                textSize = size * scale
+                textSize = size * scale * 2f
                 textAlign = align
                 typeface = Typeface.create(Typeface.MONOSPACE, if (bold) Typeface.BOLD else Typeface.NORMAL)
                 if (bold) setShadowLayer(4f * scale, 0f, 0f, color)
             }
             value.split("\n").forEachIndexed { index, line ->
-                canvas.drawText(line, x, y + index * size * 1.20f * scale, p)
+                canvas.drawText(line, x, y + index * size * 2.40f * scale, p)
             }
         }
 
         fun drawPanel(rect: RectF, radius: Float = 14f, color: Int = cyan) {
-            canvas.drawRoundRect(rect, radius * scale, radius * scale, panelPaint)
-            val p = Paint(borderPaint).apply {
-                this.color = color
-                setShadowLayer(7f * scale, 0f, 0f, color)
-            }
-            canvas.drawRoundRect(rect, radius * scale, radius * scale, p)
+            // Intentionally empty: all HUD panels are borderless and transparent.
         }
 
         val margin = 20f * scale
@@ -449,7 +444,7 @@ class CameraRecordingManager(private val context: Context) {
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
         val telemTop = techTop + techHeight + 12f * scale
         val telemWidth = 270f * scale
-        val telemHeight = 420f * scale
+        val telemHeight = 500f * scale
         val telemRect = RectF(margin, telemTop, margin + telemWidth, telemTop + telemHeight)
         drawPanel(telemRect, 14f, cyan)
 
