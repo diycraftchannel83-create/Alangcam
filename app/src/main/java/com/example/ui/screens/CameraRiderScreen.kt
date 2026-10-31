@@ -296,7 +296,8 @@ fun CameraRiderScreen(
                     telemetry = telemetry,
                     speedUnit = settings.speedUnit,
                     overlayConfig = overlayConfig,
-                    language = language
+                    language = language,
+                    isLandscape = isLandscape
                 )
             }
 
