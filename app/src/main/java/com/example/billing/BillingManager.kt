@@ -134,9 +134,14 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
             _state.value = _state.value.copy(message = "Penawaran pembelian produk belum tersedia.")
             return
         }
+        val offerToken = offer.offerToken
+        if (offerToken.isNullOrBlank()) {
+            _state.value = _state.value.copy(message = "Token penawaran pembelian tidak tersedia. Coba lagi beberapa saat.")
+            return
+        }
         val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(details)
-            .setOfferToken(offer.offerToken)
+            .setOfferToken(offerToken)
             .build()
         val flowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(listOf(productParams))
