@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.camera.CameraRecordingManager
+import com.example.ui.uiText
 import com.example.billing.BillingManager
 import com.example.data.local.RideDatabase
 import com.example.data.local.RideEntity
@@ -165,9 +166,9 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         cameraManager.onRecordingCreditUsed = { seconds -> billingManager.deductRecordingSeconds(seconds) }
         cameraManager.onRecordingLimitReached = { usedCredits ->
             _bannerMessage.value = if (usedCredits) {
-                if (_language.value == "id") "Kredit rekam habis. Silakan top up untuk melanjutkan." else "Recording credit is exhausted. Top up to continue."
+                uiText(_language.value, "Kredit rekam habis. Silakan top up untuk melanjutkan.", "Recording credit is exhausted. Top up to continue.")
             } else {
-                if (_language.value == "id") "Batas rekaman gratis 2 menit tercapai. Top up kredit untuk merekam hingga 4 jam." else "The 2-minute free recording limit has been reached. Top up credits for up to 4 hours."
+                uiText(_language.value, "Batas rekaman gratis 2 menit tercapai. Top up kredit untuk merekam hingga 4 jam.", "The 2-minute free recording limit has been reached. Top up credits for up to 4 hours.")
             }
         }
         cameraManager.videoProfileLabelProvider = {
@@ -185,7 +186,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun updateBannerForMissingAudioPermission() {
-        _bannerMessage.value = if (_language.value == "id") "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio." else "Microphone permission denied. Video will be recorded without audio."
+        _bannerMessage.value = uiText(_language.value, "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio.", "Microphone permission denied. Video will be recorded without audio.")
     }
 
     fun startGpsTracking() {
@@ -197,16 +198,16 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             // Freeze trip metrics at the user's stop action; encoder finalization is asynchronous.
             recordingTelemetrySnapshot = telemetry.value
             cameraManager.stopRecording()
-            _bannerMessage.value = if (_language.value == "id") "Perekaman selesai & tersimpan otomatis" else "Recording completed and saved automatically"
+            _bannerMessage.value = uiText(_language.value, "Perekaman selesai & tersimpan otomatis", "Recording completed and saved automatically")
         } else {
             // Every manual recording starts with a clean trip accumulator.
             gpsTracker.resetTrip()
             recordingTelemetrySnapshot = null
             cameraManager.startRecording(_settings.value.audioEnabled)
             _bannerMessage.value = if (billingManager.state.value.creditSeconds > 0L) {
-                if (_language.value == "id") "Perekaman dimulai menggunakan kredit rekam" else "Recording started using recording credits"
+                uiText(_language.value, "Perekaman dimulai menggunakan kredit rekam", "Recording started using recording credits")
             } else {
-                if (_language.value == "id") "Perekaman gratis dimulai (maksimal 2 menit)" else "Free recording started (2-minute limit)"
+                uiText(_language.value, "Perekaman gratis dimulai (maksimal 2 menit)", "Free recording started (2-minute limit)")
             }
         }
     }
@@ -375,8 +376,8 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     fun exportVideoWithSpeedometer(session: RideSession) {
         viewModelScope.launch {
-            _bannerMessage.value = if (_language.value == "id") "Mengekspor video dengan overlay spedometer..." else "Exporting video with speedometer overlay..."
-            videoExporter.exportVideoWithSpeedometerOverlay(session, _settings.value.speedUnit)
+            _bannerMessage.value = uiText(_language.value, "Mengekspor video dengan overlay spedometer...", "Exporting video with speedometer overlay...")
+            videoExporter.exportVideoWithSpeedometerOverlay(session, _settings.value.speedUnit, _language.value)
         }
     }
 
