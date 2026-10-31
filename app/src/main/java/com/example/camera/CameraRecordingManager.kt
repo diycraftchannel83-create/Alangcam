@@ -643,46 +643,51 @@ class CameraRecordingManager(private val context: Context) {
         if (premiumProvider?.invoke() != true) {
             // Use the supplied transparent PNG as the brand watermark in the live
             // CameraX overlay so it is also permanently burned into recorded MP4 frames.
-            val mark = watermarkBitmap ?: BitmapFactory.decodeResource(
+            val alangMotorMark = watermarkBitmap ?: BitmapFactory.decodeResource(
                 context.resources, com.example.R.drawable.watermark_camrider
             )?.also { watermarkBitmap = it }
-            if (mark != null && !mark.isRecycled) {
-                val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-                    alpha = 205
-                }
-                val aspect = mark.height / mark.width.toFloat()
+            val createdWithMark = BitmapFactory.decodeResource(
+                context.resources, com.example.R.drawable.watermark_created_camrider
+            )
+            val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply { alpha = 205 }
 
-                // Additional brand marks requested for free users: one below the
-                // telemetry dock and one directly below the speedometer assembly.
-                val smallWidth = (w * 0.16f).coerceIn(112f * scale, 300f * scale)
-                val smallHeight = smallWidth * aspect
+            // Created with CamRiderPro logo below the telemetry: this is drawn into
+            // the CameraX VIDEO_CAPTURE overlay, so it is baked into the recorded MP4.
+            if (createdWithMark != null && !createdWithMark.isRecycled) {
+                val logoWidth = (w * 0.25f).coerceIn(180f * scale, 420f * scale)
+                val logoHeight = logoWidth * createdWithMark.height / createdWithMark.width.toFloat()
                 val telemetryBottom = telemTop + telemHeight
-                val telemetryY = (telemetryBottom + 8f * scale)
-                    .coerceAtMost(h - smallHeight - 8f * scale)
+                val logoTop = (telemetryBottom + 8f * scale)
+                    .coerceAtMost(h - logoHeight - 8f * scale)
                 canvas.drawBitmap(
-                    mark, null,
-                    RectF(margin, telemetryY, margin + smallWidth, telemetryY + smallHeight),
+                    createdWithMark, null,
+                    RectF(margin, logoTop, margin + logoWidth, logoTop + logoHeight),
                     watermarkPaint
                 )
+                createdWithMark.recycle()
+            }
 
-                if (config?.showSpeedometer != false) {
-                    val wmRadius = minOf(w * 0.21f, h * 0.15f).coerceAtLeast(92f * scale)
-                    val wmCx = (w * (config?.speedometerXRatio ?: 0.65f))
-                        .coerceIn(wmRadius + 15f * scale, w - wmRadius - 15f * scale)
-                    val wmCy = (h * (config?.speedometerYRatio ?: 0.38f))
-                        .coerceIn(wmRadius + 15f * scale, h - wmRadius - 85f * scale)
-                    val speedometerBottom = wmCy + wmRadius +
-                        (if (config?.showGearRpm != false) 48f else 16f) * scale
-                    val speedometerY = (speedometerBottom + 8f * scale)
-                        .coerceAtMost(h - smallHeight - 8f * scale)
-                    val speedometerLeft = (wmCx - smallWidth / 2f)
-                        .coerceIn(margin, w - margin - smallWidth)
-                    canvas.drawBitmap(
-                        mark, null,
-                        RectF(speedometerLeft, speedometerY, speedometerLeft + smallWidth, speedometerY + smallHeight),
-                        watermarkPaint
-                    )
-                }
+            // Keep the Alang Motor logo as its own watermark below the speedometer.
+            if (alangMotorMark != null && !alangMotorMark.isRecycled && config?.showSpeedometer != false) {
+                val aspect = alangMotorMark.height / alangMotorMark.width.toFloat()
+                val smallWidth = (w * 0.16f).coerceIn(112f * scale, 300f * scale)
+                val smallHeight = smallWidth * aspect
+                val wmRadius = minOf(w * 0.21f, h * 0.15f).coerceAtLeast(92f * scale)
+                val wmCx = (w * (config?.speedometerXRatio ?: 0.65f))
+                    .coerceIn(wmRadius + 15f * scale, w - wmRadius - 15f * scale)
+                val wmCy = (h * (config?.speedometerYRatio ?: 0.38f))
+                    .coerceIn(wmRadius + 15f * scale, h - wmRadius - 85f * scale)
+                val speedometerBottom = wmCy + wmRadius +
+                    (if (config?.showGearRpm != false) 48f else 16f) * scale
+                val speedometerY = (speedometerBottom + 8f * scale)
+                    .coerceAtMost(h - smallHeight - 8f * scale)
+                val speedometerLeft = (wmCx - smallWidth / 2f)
+                    .coerceIn(margin, w - margin - smallWidth)
+                canvas.drawBitmap(
+                    alangMotorMark, null,
+                    RectF(speedometerLeft, speedometerY, speedometerLeft + smallWidth, speedometerY + smallHeight),
+                    watermarkPaint
+                )
             }
         }
 
