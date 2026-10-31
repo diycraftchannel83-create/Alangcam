@@ -88,17 +88,6 @@ fun TelemetryVideoBannerOverlay(
     Box(
         modifier = modifier
             .width(160.dp)
-            .border(
-                width = 1.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        NeonCyan.copy(alpha = 0.60f),
-                        NeonGreen.copy(alpha = 0.40f),
-                        NeonCyan.copy(alpha = 0.60f)
-                    )
-                ),
-                shape = RoundedCornerShape(14.dp)
-            )
             .padding(horizontal = 5.dp, vertical = 5.dp)
             .testTag("telemetry_video_banner")
     ) {
