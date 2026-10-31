@@ -35,6 +35,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -73,6 +77,8 @@ fun SettingsDialog(
     onOpenMonetization: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var selectedSection by remember { mutableStateOf("monetization") }
+
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier
@@ -123,6 +129,31 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                Spacer(modifier = Modifier.height(14.dp))
+                // Yellow navigation buttons; only the selected category is rendered.
+                listOf(
+                    Triple("monetization", uiText(language, "MONETISASI", "MONETIZATION"), Icons.Default.Videocam),
+                    Triple("language", uiText(language, "BAHASA", "LANGUAGE"), Icons.Default.Settings),
+                    Triple("simulation", uiText(language, "SIMULASI", "SIMULATION"), Icons.Default.DirectionsBike),
+                    Triple("recording", uiText(language, "REKAMAN", "RECORDING"), Icons.Default.Videocam),
+                    Triple("voice", uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"), Icons.Default.Settings),
+                    Triple("night", uiText(language, "MODE MALAM", "NIGHT MODE"), Icons.Default.Nightlight),
+                    Triple("overlay", uiText(language, "OVERLAY & TAMPILAN", "OVERLAY & DISPLAY"), Icons.Default.Visibility)
+                ).chunked(2).forEach { navRow ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(bottom = 7.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        navRow.forEach { (key, label, icon) ->
+                            SettingsNavigationButton(title = label, icon = icon,
+                                selected = selectedSection == key, modifier = Modifier.weight(1f)) {
+                                selectedSection = key
+                            }
+                        }
+                        if (navRow.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (selectedSection == "monetization") {
                 SettingsSectionHeader(
                     uiText(language, "MONETISASI CAMRIDERPRO", "CAMRIDERPRO MONETIZATION"),
                     Icons.Default.Videocam
@@ -153,6 +184,9 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                }
+
+                if (selectedSection == "language") {
                 // Language preference
                 SettingsSectionHeader(uiText(language, "BAHASA APLIKASI", "APP LANGUAGE"), Icons.Default.Settings)
                 SettingsCard {
@@ -185,6 +219,9 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                }
+
+                if (selectedSection == "simulation") {
                 // Section 1: Simulasi / Demo Mode
                 SettingsSectionHeader(uiText(language, "SIMULASI PENGUJIAN DESK/EMULATOR", "DESK/EMULATOR TEST SIMULATION"), Icons.Default.DirectionsBike)
                 SettingsCard {
@@ -220,6 +257,9 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                }
+
+                if (selectedSection == "recording") {
                 // Section 2: Video & Manual Record
                 SettingsSectionHeader(uiText(language, "PENGATURAN REKAMAN", "RECORDING SETTINGS"), Icons.Default.Videocam)
                 SettingsCard {
@@ -324,6 +364,11 @@ fun SettingsDialog(
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+                }
+
+                if (selectedSection == "voice") {
+                    SettingsSectionHeader(uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"), Icons.Default.Settings)
+                    SettingsCard {
                     Text(
                         text = uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"),
                         fontSize = 12.sp,
@@ -392,6 +437,10 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                    }
+                }
+
+                if (selectedSection == "night") {
                 // Section 3: Mode Malam
                 SettingsSectionHeader(uiText(language, "MODE MALAM (PENINGKATAN CAHAYA RENDAH)", "NIGHT MODE (LOW LIGHT BOOST)"), Icons.Default.Nightlight)
                 SettingsCard {
@@ -426,6 +475,9 @@ fun SettingsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
+                }
+
+                if (selectedSection == "overlay") {
                 // Section 4: Overlay & Tampilan
                 SettingsSectionHeader(uiText(language, "OVERLAY & TAMPILAN", "OVERLAY & DISPLAY"), Icons.Default.Visibility)
                 SettingsCard {
@@ -511,8 +563,34 @@ fun SettingsDialog(
                         onOverlayConfigChange(overlayConfig.copy(isSpeedometerLocked = it))
                     }
                 }
+                }
+
             }
         }
+    }
+}
+
+
+@Composable
+private fun SettingsNavigationButton(
+    title: String, icon: ImageVector, selected: Boolean,
+    modifier: Modifier = Modifier, onClick: () -> Unit
+) {
+    Row(
+        modifier = modifier
+            .background(if (selected) NeonYellow else CockpitCard, RoundedCornerShape(9.dp))
+            .border(1.dp, if (selected) NeonYellow else CockpitBorder, RoundedCornerShape(9.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 11.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = icon, contentDescription = null,
+            tint = if (selected) Color.Black else NeonYellow, modifier = Modifier.size(15.dp))
+        Spacer(Modifier.width(5.dp))
+        Text(text = title, fontSize = 10.sp, fontWeight = FontWeight.Black,
+            color = if (selected) Color.Black else NeonYellow,
+            fontFamily = com.example.ui.theme.RajdhaniFontFamily, letterSpacing = 0.35.sp)
     }
 }
 
