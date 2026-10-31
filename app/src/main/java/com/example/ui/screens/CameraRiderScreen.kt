@@ -376,14 +376,33 @@ fun CameraRiderScreen(
                     .coerceIn(8.dp, (maxWidth - watermarkWidth - 8.dp).coerceAtLeast(8.dp))
                 val watermarkY = ((maxHeight * overlayConfig.speedometerYRatio) + gaugeHalf + 68.dp)
                     .coerceAtMost((maxHeight - 34.dp).coerceAtLeast(8.dp))
-                Image(
-                    painter = painterResource(id = com.example.R.drawable.watermark_camrider),
-                    contentDescription = "CamRiderPro watermark",
-                    alpha = 0.82f,
-                    modifier = Modifier
-                        .offset(x = watermarkX, y = watermarkY)
-                        .width(watermarkWidth)
-                )
+                // A malformed or unsupported PNG must never crash the entire camera screen.
+                // Keep a readable brand fallback if Android cannot decode the optional watermark.
+                val watermarkPainter = try {
+                    painterResource(id = com.example.R.drawable.watermark_camrider)
+                } catch (error: Exception) {
+                    android.util.Log.e("CameraRiderScreen", "Unable to decode watermark_camrider", error)
+                    null
+                }
+                if (watermarkPainter != null) {
+                    Image(
+                        painter = watermarkPainter,
+                        contentDescription = "Alang Motor watermark",
+                        alpha = 0.82f,
+                        modifier = Modifier
+                            .offset(x = watermarkX, y = watermarkY)
+                            .width(watermarkWidth)
+                    )
+                } else {
+                    Text(
+                        text = "ALANG MOTOR",
+                        color = NeonYellow,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier
+                            .offset(x = watermarkX, y = watermarkY)
+                    )
+                }
             }
 
             // Floating Notification Toast/Banner
