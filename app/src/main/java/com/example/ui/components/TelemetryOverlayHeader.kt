@@ -115,10 +115,6 @@ fun TelemetryOverlayHeader(
         // Left: Recording Status Pill
         Row(
             modifier = Modifier
-                .background(
-                    color = CockpitBlack.copy(alpha = 0.90f),
-                    shape = RoundedCornerShape(12.dp)
-                )
                 .border(
                     1.5.dp,
                     if (isRecording) NeonRed.copy(alpha = 0.85f) else NeonGreen.copy(alpha = 0.5f),
@@ -184,10 +180,6 @@ fun TelemetryOverlayHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        color = CockpitBlack.copy(alpha = 0.90f),
-                        shape = RoundedCornerShape(12.dp)
-                    )
                     .border(1.2.dp, CockpitBorder, RoundedCornerShape(12.dp))
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -234,7 +226,6 @@ fun TelemetryOverlayHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(CockpitCard.copy(alpha = 0.90f), RoundedCornerShape(8.dp))
                     .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
                     .padding(horizontal = 10.dp, vertical = 3.5.dp),
                 verticalAlignment = Alignment.CenterVertically,
