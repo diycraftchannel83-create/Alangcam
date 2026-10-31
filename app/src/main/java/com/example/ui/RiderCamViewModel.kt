@@ -110,7 +110,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                         Log.e("CamRiderVoice", "TTS playback failed ($errorCode): $utteranceId")
                     }
                 })
-                val result = voiceTts?.setLanguage(if (_language.value == "id") Locale("id", "ID") else Locale.US)
+                val result = voiceTts?.setLanguage(localeFor(_language.value))
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                     voiceTts?.setLanguage(Locale.getDefault())
                 }
@@ -239,11 +239,24 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         _isScreenLocked.value = false
     }
 
+    private fun localeFor(code: String): Locale = when (code) {
+        "id" -> Locale("id", "ID")
+        "ms" -> Locale("ms", "MY")
+        "ja" -> Locale.JAPANESE
+        "ru" -> Locale("ru", "RU")
+        "th" -> Locale("th", "TH")
+        "vi" -> Locale("vi", "VN")
+        "zh" -> Locale.SIMPLIFIED_CHINESE
+        "ko" -> Locale.KOREAN
+        "ar" -> Locale("ar")
+        else -> Locale.US
+    }
+
     fun setLanguage(languageCode: String) {
-        val normalized = if (languageCode == "en") "en" else "id"
+        val normalized = languageCode.takeIf { it in setOf("id", "en", "ms", "ja", "ru", "th", "vi", "zh", "ko", "ar") } ?: "id"
         _language.value = normalized
         prefs.edit().putString("language", normalized).apply()
-        voiceTts?.setLanguage(if (normalized == "id") Locale("id", "ID") else Locale.US)
+        voiceTts?.setLanguage(localeFor(normalized))
     }
 
     fun updateSettings(newSettings: RecordingSettings) {
