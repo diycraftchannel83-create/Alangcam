@@ -569,6 +569,16 @@ fun CameraRiderScreen(
                         viewModel.billingManager.launchPurchase(it, BillingManager.RECORDING_CREDIT_PRODUCT_ID)
                     }
                 },
+                onBuyCredit2Hours = {
+                    (context as? Activity)?.let {
+                        viewModel.billingManager.launchPurchase(it, BillingManager.RECORDING_CREDIT_2H_PRODUCT_ID)
+                    }
+                },
+                onBuyCredit5Hours = {
+                    (context as? Activity)?.let {
+                        viewModel.billingManager.launchPurchase(it, BillingManager.RECORDING_CREDIT_5H_PRODUCT_ID)
+                    }
+                },
                 onRefresh = { viewModel.billingManager.refreshPurchases() },
                 onDismiss = { showMonetizationDialog = false }
             )
