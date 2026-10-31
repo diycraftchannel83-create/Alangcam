@@ -6,6 +6,7 @@ package com.example.ui
  */
 private val uiTranslations: Map<String, Map<String, String>> = mapOf(
     "ms" to mapOf(
+        "MAX SPEED" to "KELAJUAN MAKSIMUM", "TIME" to "MASA", "COORDINATES" to "KOORDINAT", "ALTITUDE" to "ALTITUD", "DISTANCE" to "JARAK", "AVERAGE" to "PURATA",
         "CAMRIDER SETTINGS" to "TETAPAN CAMRIDER", "APP LANGUAGE" to "BAHASA APLIKASI",
         "Choose Language" to "Pilih Bahasa", "CAMRIDERPRO MONETIZATION" to "PENJANAAN PENDAPATAN CAMRIDERPRO",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "Premium Sepanjang Hayat hanya membuang tera air. Kredit rakaman menambah tempoh sehingga 4 jam.",
@@ -14,6 +15,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "Video Resolution" to "Resolusi Video", "GPS LOCK" to "GPS DIKUNCI", "SEARCHING GPS..." to "MENCARI GPS..."
     ),
     "ja" to mapOf(
+        "MAX SPEED" to "最高速度", "TIME" to "時刻", "COORDINATES" to "座標", "ALTITUDE" to "高度", "DISTANCE" to "距離", "AVERAGE" to "平均速度",
         "CAMRIDER SETTINGS" to "CAMRIDER 設定", "APP LANGUAGE" to "アプリの言語", "Choose Language" to "言語を選択",
         "CAMRIDERPRO MONETIZATION" to "CAMRIDERPRO の収益化",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "プレミアムは透かしのみを削除します。録画クレジットで最大4時間録画できます。",
@@ -22,6 +24,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "GPS測位完了", "SEARCHING GPS..." to "GPS検索中..."
     ),
     "ru" to mapOf(
+        "MAX SPEED" to "МАКС. СКОРОСТЬ", "TIME" to "ВРЕМЯ", "COORDINATES" to "КООРДИНАТЫ", "ALTITUDE" to "ВЫСОТА", "DISTANCE" to "РАССТОЯНИЕ", "AVERAGE" to "СРЕДНЯЯ",
         "CAMRIDER SETTINGS" to "НАСТРОЙКИ CAMRIDER", "APP LANGUAGE" to "ЯЗЫК ПРИЛОЖЕНИЯ", "Choose Language" to "Выберите язык",
         "CAMRIDERPRO MONETIZATION" to "МОНЕТИЗАЦИЯ CAMRIDERPRO",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "Premium Lifetime убирает только водяной знак. Кредиты записи добавляют до 4 часов.",
@@ -30,6 +33,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "GPS ЗАФИКСИРОВАН", "SEARCHING GPS..." to "ПОИСК GPS..."
     ),
     "th" to mapOf(
+        "MAX SPEED" to "ความเร็วสูงสุด", "TIME" to "เวลา", "COORDINATES" to "พิกัด", "ALTITUDE" to "ระดับความสูง", "DISTANCE" to "ระยะทาง", "AVERAGE" to "ความเร็วเฉลี่ย",
         "CAMRIDER SETTINGS" to "การตั้งค่า CAMRIDER", "APP LANGUAGE" to "ภาษาแอป", "Choose Language" to "เลือกภาษา",
         "CAMRIDERPRO MONETIZATION" to "การสร้างรายได้ CAMRIDERPRO",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "Premium Lifetime ลบเฉพาะลายน้ำ เครดิตบันทึกเพิ่มเวลาได้สูงสุด 4 ชั่วโมง",
@@ -38,6 +42,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "ล็อก GPS แล้ว", "SEARCHING GPS..." to "กำลังค้นหา GPS..."
     ),
     "vi" to mapOf(
+        "MAX SPEED" to "TỐC ĐỘ TỐI ĐA", "TIME" to "THỜI GIAN", "COORDINATES" to "TỌA ĐỘ", "ALTITUDE" to "ĐỘ CAO", "DISTANCE" to "QUÃNG ĐƯỜNG", "AVERAGE" to "TRUNG BÌNH",
         "CAMRIDER SETTINGS" to "CÀI ĐẶT CAMRIDER", "APP LANGUAGE" to "NGÔN NGỮ ỨNG DỤNG", "Choose Language" to "Chọn ngôn ngữ",
         "CAMRIDERPRO MONETIZATION" to "KIẾM TIỀN CAMRIDERPRO",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "Premium trọn đời chỉ xóa hình mờ. Tín dụng ghi hình tăng thời lượng lên đến 4 giờ.",
@@ -46,6 +51,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "ĐÃ KHÓA GPS", "SEARCHING GPS..." to "ĐANG TÌM GPS..."
     ),
     "zh" to mapOf(
+        "MAX SPEED" to "最高速度", "TIME" to "时间", "COORDINATES" to "坐标", "ALTITUDE" to "海拔", "DISTANCE" to "距离", "AVERAGE" to "平均速度",
         "CAMRIDER SETTINGS" to "CAMRIDER 设置", "APP LANGUAGE" to "应用语言", "Choose Language" to "选择语言",
         "CAMRIDERPRO MONETIZATION" to "CAMRIDERPRO 盈利设置",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "终身高级版仅移除水印。录制时长积分最多可增加至4小时。",
@@ -54,6 +60,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "GPS已定位", "SEARCHING GPS..." to "正在搜索GPS..."
     ),
     "ko" to mapOf(
+        "MAX SPEED" to "최고 속도", "TIME" to "시간", "COORDINATES" to "좌표", "ALTITUDE" to "고도", "DISTANCE" to "거리", "AVERAGE" to "평균 속도",
         "CAMRIDER SETTINGS" to "CAMRIDER 설정", "APP LANGUAGE" to "앱 언어", "Choose Language" to "언어 선택",
         "CAMRIDERPRO MONETIZATION" to "CAMRIDERPRO 수익화",
         "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours." to "프리미엄은 워터마크만 제거합니다. 녹화 크레딧으로 최대 4시간 녹화할 수 있습니다.",
@@ -62,6 +69,7 @@ private val uiTranslations: Map<String, Map<String, String>> = mapOf(
         "GPS LOCK" to "GPS 고정", "SEARCHING GPS..." to "GPS 검색 중..."
     ),
     "ar" to mapOf(
+        "MAX SPEED" to "السرعة القصوى", "TIME" to "الوقت", "COORDINATES" to "الإحداثيات", "ALTITUDE" to "الارتفاع", "DISTANCE" to "المسافة", "AVERAGE" to "المتوسط",
         "CAMRIDER SETTINGS" to "إعدادات CAMRIDER", "APP LANGUAGE" to "لغة التطبيق", "Choose Language" to "اختر اللغة",
         "CAMRIDERPRO MONETIZATION" to "تحقيق الدخل من CAMRIDERPRO",
         "Premium Lifetime removes only the watermark. Recording credits add up to  4 hours." to "الباقة المميزة تزيل العلامة المائية فقط. تضيف أرصدة التسجيل مدة تصل إلى 4 ساعات.",
