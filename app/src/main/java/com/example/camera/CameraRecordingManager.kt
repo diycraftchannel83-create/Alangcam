@@ -652,17 +652,6 @@ class CameraRecordingManager(private val context: Context) {
                 }
                 val aspect = mark.height / mark.width.toFloat()
 
-                // Primary watermark at the lower-right edge of the recorded frame.
-                val mainWidth = (w * 0.22f).coerceIn(150f * scale, 420f * scale)
-                val mainHeight = mainWidth * aspect
-                val right = w - margin
-                val bottom = h - 16f * scale
-                canvas.drawBitmap(
-                    mark, null,
-                    RectF(right - mainWidth, bottom - mainHeight, right, bottom),
-                    watermarkPaint
-                )
-
                 // Additional brand marks requested for free users: one below the
                 // telemetry dock and one directly below the speedometer assembly.
                 val smallWidth = (w * 0.16f).coerceIn(112f * scale, 300f * scale)
