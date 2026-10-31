@@ -1,0 +1,40 @@
+name: CamRiderPro Firebase Functions CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/firebase-credit-wallet
+    paths:
+      - "functions/**"
+      - "firebase.json"
+      - "firebase/firestore.rules"
+      - ".github/workflows/firebase-functions.yml"
+  pull_request:
+    paths:
+      - "functions/**"
+      - "firebase.json"
+      - "firebase/firestore.rules"
+      - ".github/workflows/firebase-functions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        working-directory: functions
+        run: npm install
+      - name: Compile TypeScript
+        working-directory: functions
+        run: npm run build
