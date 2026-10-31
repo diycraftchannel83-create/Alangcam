@@ -2,21 +2,17 @@ package com.example.billing
 
 import android.app.Activity
 import android.content.Context
-import com.android.billingclient.api.AcknowledgePurchaseParams
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.BillingClientStateListener
-import com.android.billingclient.api.BillingFlowParams
-import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.ConsumeParams
-import com.android.billingclient.api.PendingPurchasesParams
-import com.android.billingclient.api.ProductDetails
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryPurchasesParams
+import android.util.Log
+import com.android.billingclient.api.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class BillingUiState(
     val isConnected: Boolean = false,
@@ -29,11 +25,8 @@ data class BillingUiState(
 )
 
 /**
- * Client-side Play Billing integration.
- *
- * Product IDs must exactly match the one-time products configured in Play Console.
- * For production-grade fraud protection and reliable cross-device consumable balances,
- * validate purchase tokens and maintain credit balances on a trusted backend.
+ * Play Billing client. Purchases are verified and credited by Firebase Cloud Functions.
+ * The client never writes a credit balance locally.
  */
 class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
@@ -44,29 +37,52 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         const val RECORDING_CREDIT_5H_PRODUCT_ID = "5._5000_credit"
         const val RECORDING_CREDIT_2H_SECONDS = 4L * 60L * 60L
         const val RECORDING_CREDIT_5H_SECONDS = 11L * 60L * 60L
-        private const val PREFS_NAME = "camriderpro_billing"
-        private const val KEY_PREMIUM = "premium_owned"
-        private const val KEY_CREDIT_SECONDS = "recording_credit_seconds"
-        private const val KEY_PROCESSED_CREDIT_TOKENS = "processed_credit_tokens"
+        private const val TAG = "BillingManager"
     }
 
-    private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = appContext.getSharedPreferences("camriderpro_billing", Context.MODE_PRIVATE)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val creditRepository = FirebaseCreditRepository()
+    private val processingTokens = mutableSetOf<String>()
+
     private val _state = MutableStateFlow(
-        BillingUiState(
-            isPremium = prefs.getBoolean(KEY_PREMIUM, false),
-            creditSeconds = prefs.getLong(KEY_CREDIT_SECONDS, 0L).coerceAtLeast(0L)
-        )
+        BillingUiState(isPremium = prefs.getBoolean("premium_owned", false))
     )
     val state: StateFlow<BillingUiState> = _state.asStateFlow()
 
     private val productDetails = mutableMapOf<String, ProductDetails>()
-    private val billingClient: BillingClient = BillingClient.newBuilder(context.applicationContext)
+    private val billingClient: BillingClient = BillingClient.newBuilder(appContext)
         .setListener(this)
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
         )
         .enableAutoServiceReconnection()
         .build()
+
+    init {
+        scope.launch {
+            try {
+                creditRepository.signInAnonymouslyIfNeeded()
+                creditRepository.wallet.collect { wallet ->
+                    if (wallet != null) {
+                        _state.value = _state.value.copy(
+                            creditSeconds = wallet.creditSeconds.coerceAtLeast(0L),
+                            isPremium = _state.value.isPremium || wallet.totalPurchasedSeconds > 0L
+                        )
+                        if (wallet.totalPurchasedSeconds > 0L) {
+                            prefs.edit().putBoolean("premium_owned", true).apply()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Firebase wallet initialization failed", e)
+                _state.value = _state.value.copy(
+                    message = "Saldo kredit belum dapat disinkronkan. Periksa koneksi internet dan Firebase."
+                )
+            }
+        }
+    }
 
     fun connect() {
         if (billingClient.isReady) {
@@ -95,7 +111,12 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
     }
 
     private fun queryProducts() {
-        val products = listOf(RECORDING_CREDIT_PRODUCT_ID, RECORDING_CREDIT_2H_PRODUCT_ID, RECORDING_CREDIT_5H_PRODUCT_ID).map { id ->
+        val ids = listOf(
+            RECORDING_CREDIT_PRODUCT_ID,
+            RECORDING_CREDIT_2H_PRODUCT_ID,
+            RECORDING_CREDIT_5H_PRODUCT_ID
+        )
+        val products = ids.map { id ->
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(id)
                 .setProductType(BillingClient.ProductType.INAPP)
@@ -105,13 +126,10 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         billingClient.queryProductDetailsAsync(params) { result, detailsResult ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                 detailsResult.productDetailsList.forEach { productDetails[it.productId] = it }
-                val creditPrice = priceFor(RECORDING_CREDIT_PRODUCT_ID)
-                val credit2Price = priceFor(RECORDING_CREDIT_2H_PRODUCT_ID)
-                val credit5Price = priceFor(RECORDING_CREDIT_5H_PRODUCT_ID)
                 _state.value = _state.value.copy(
-                    creditPrice = creditPrice,
-                    credit2Price = credit2Price,
-                    credit5Price = credit5Price,
+                    creditPrice = priceFor(RECORDING_CREDIT_PRODUCT_ID),
+                    credit2Price = priceFor(RECORDING_CREDIT_2H_PRODUCT_ID),
+                    credit5Price = priceFor(RECORDING_CREDIT_5H_PRODUCT_ID),
                     isConnected = true
                 )
             } else {
@@ -120,40 +138,32 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         }
     }
 
-    private fun priceFor(productId: String): String {
-        return productDetails[productId]
-            ?.oneTimePurchaseOfferDetailsList
-            ?.firstOrNull()
-            ?.formattedPrice ?: "Belum tersedia"
-    }
+    private fun priceFor(productId: String): String =
+        productDetails[productId]?.oneTimePurchaseOfferDetailsList
+            ?.firstOrNull()?.formattedPrice ?: "Belum tersedia"
 
     fun launchPurchase(activity: Activity, productId: String) {
         val details = productDetails[productId]
         if (!billingClient.isReady || details == null) {
             _state.value = _state.value.copy(
-                message = "Produk belum siap. Pastikan produk sudah dibuat dan diaktifkan di Play Console."
+                message = "Produk belum siap. Pastikan produk aktif di Play Console."
             )
             connect()
             return
         }
         val offer = details.oneTimePurchaseOfferDetailsList?.firstOrNull()
         if (offer == null) {
-            _state.value = _state.value.copy(message = "Penawaran pembelian produk belum tersedia.")
+            _state.value = _state.value.copy(message = "Penawaran pembelian belum tersedia.")
             return
         }
-        val offerToken = offer.offerToken
-        if (offerToken.isNullOrBlank()) {
-            _state.value = _state.value.copy(message = "Token penawaran pembelian tidak tersedia. Coba lagi beberapa saat.")
-            return
-        }
-        val productParams = BillingFlowParams.ProductDetailsParams.newBuilder()
+        val params = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(details)
-            .setOfferToken(offerToken)
+            .setOfferToken(offer.offerToken)
             .build()
-        val flowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productParams))
-            .build()
-        val result = billingClient.launchBillingFlow(activity, flowParams)
+        val result = billingClient.launchBillingFlow(
+            activity,
+            BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(params)).build()
+        )
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
             _state.value = _state.value.copy(message = "Tidak dapat membuka pembayaran: ${result.debugMessage}")
         }
@@ -180,83 +190,81 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                 purchases.forEach(::processPurchase)
             result.responseCode == BillingClient.BillingResponseCode.USER_CANCELED ->
                 _state.value = _state.value.copy(message = "Pembelian dibatalkan.")
-            else ->
-                _state.value = _state.value.copy(message = "Pembelian gagal: ${result.debugMessage}")
+            else -> _state.value = _state.value.copy(message = "Pembelian gagal: ${result.debugMessage}")
         }
     }
 
     private fun processPurchase(purchase: Purchase) {
-        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) {
-            if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
-                _state.value = _state.value.copy(message = "Pembayaran masih menunggu konfirmasi. Fitur belum diberikan.")
+        if (purchase.purchaseState == Purchase.PurchaseState.PENDING) {
+            _state.value = _state.value.copy(message = "Pembayaran masih menunggu konfirmasi. Kredit belum diberikan.")
+            return
+        }
+        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
+
+        if (LEGACY_WATERMARK_PRODUCT_ID in purchase.products) {
+            prefs.edit().putBoolean("premium_owned", true).apply()
+            _state.value = _state.value.copy(
+                isPremium = true,
+                message = "Watermark sudah terbuka dari pembelian sebelumnya."
+            )
+            if (!purchase.isAcknowledged) {
+                billingClient.acknowledgePurchase(
+                    AcknowledgePurchaseParams.newBuilder()
+                        .setPurchaseToken(purchase.purchaseToken).build()
+                ) { }
             }
             return
         }
 
-        // Continue honoring historical purchases of the retired remove_watermark SKU.
-        if (LEGACY_WATERMARK_PRODUCT_ID in purchase.products) {
-            prefs.edit().putBoolean(KEY_PREMIUM, true).apply()
-            _state.value = _state.value.copy(isPremium = true, message = "Watermark sudah terbuka dari pembelian sebelumnya.")
-            if (!purchase.isAcknowledged) {
-                val params = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-                billingClient.acknowledgePurchase(params) { }
-            }
-        }
-        val purchasedCredits = when {
-            RECORDING_CREDIT_PRODUCT_ID in purchase.products -> 1000
-            RECORDING_CREDIT_2H_PRODUCT_ID in purchase.products -> 2000
-            RECORDING_CREDIT_5H_PRODUCT_ID in purchase.products -> 5000
-            else -> 0
-        }
-        val purchasedCreditSeconds = when (purchasedCredits) {
-            1000 -> RECORDING_CREDIT_SECONDS
-            2000 -> RECORDING_CREDIT_2H_SECONDS
-            5000 -> RECORDING_CREDIT_5H_SECONDS
-            else -> 0L
-        }
-        if (purchasedCreditSeconds > 0L) {
-            val token = purchase.purchaseToken
-            val processed = prefs.getStringSet(KEY_PROCESSED_CREDIT_TOKENS, emptySet())?.toMutableSet()
-                ?: mutableSetOf()
-            if (token !in processed) {
-                processed.add(token)
-                val newBalance = prefs.getLong(KEY_CREDIT_SECONDS, 0L) + purchasedCreditSeconds
-                // Any paid credit package permanently unlocks watermark-free HUD and exports.
-                prefs.edit()
-                    .putStringSet(KEY_PROCESSED_CREDIT_TOKENS, processed)
-                    .putLong(KEY_CREDIT_SECONDS, newBalance)
-                    .putBoolean(KEY_PREMIUM, true)
-                    .apply()
+        val productId = purchase.products.firstOrNull { it in setOf(
+            RECORDING_CREDIT_PRODUCT_ID,
+            RECORDING_CREDIT_2H_PRODUCT_ID,
+            RECORDING_CREDIT_5H_PRODUCT_ID
+        ) } ?: return
+
+        val token = purchase.purchaseToken
+        if (!processingTokens.add(token)) return
+        scope.launch {
+            try {
+                // A server-verified and idempotent grant must succeed before consuming the Play token.
+                creditRepository.signInAnonymouslyIfNeeded()
+                creditRepository.verifyCreditPurchase(productId, token)
+                prefs.edit().putBoolean("premium_owned", true).apply()
                 _state.value = _state.value.copy(
                     isPremium = true,
-                    creditSeconds = newBalance,
-                    message = "$purchasedCredits kredit (${purchasedCreditSeconds / 3600L} jam) berhasil ditambahkan. Watermark dihapus."
+                    message = "Pembelian berhasil diverifikasi. Kredit sedang disinkronkan ke saldo akun."
                 )
-            }
-
-            // Persist the grant before consuming so a failed consume can be retried without
-            // granting the same purchase token twice on the next purchase query.
-            val consumeParams = ConsumeParams.newBuilder().setPurchaseToken(token).build()
-            billingClient.consumeAsync(consumeParams) { consumeResult, _ ->
-                if (consumeResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                    _state.value = _state.value.copy(
-                        message = "Kredit tersimpan. Penyelesaian transaksi akan dicoba kembali saat aplikasi dibuka."
-                    )
+                withContext(Dispatchers.IO) {
+                    // No local balance mutation: Firestore listener is the only balance source.
                 }
+                val consume = ConsumeParams.newBuilder().setPurchaseToken(token).build()
+                billingClient.consumeAsync(consume) { consumeResult, _ ->
+                    if (consumeResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                        _state.value = _state.value.copy(
+                            message = "Kredit sudah diverifikasi server. Penyelesaian transaksi Play akan dicoba kembali."
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Purchase verification failed", e)
+                _state.value = _state.value.copy(
+                    message = "Pembelian belum dapat diverifikasi. Kredit tidak ditambahkan; tekan Pulihkan Pembelian setelah koneksi pulih."
+                )
+            } finally {
+                processingTokens.remove(token)
             }
         }
     }
 
+    /** Deprecated: credit deductions must now be performed by server recording sessions. */
+    @Deprecated("Use Firebase recording session heartbeat; local credit deductions are disabled.")
     fun deductRecordingSeconds(seconds: Long) {
-        if (seconds <= 0L) return
-        val newBalance = (prefs.getLong(KEY_CREDIT_SECONDS, 0L) - seconds).coerceAtLeast(0L)
-        prefs.edit().putLong(KEY_CREDIT_SECONDS, newBalance).apply()
-        _state.value = _state.value.copy(creditSeconds = newBalance)
+        // Intentionally no-op. Firestore is the single source of truth for credit balance.
     }
 
     fun close() {
+        scope.cancel()
+        creditRepository.stopObserving()
         if (billingClient.isReady) billingClient.endConnection()
     }
 }
