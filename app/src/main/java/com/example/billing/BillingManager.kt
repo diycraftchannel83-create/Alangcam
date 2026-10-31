@@ -22,7 +22,6 @@ data class BillingUiState(
     val isConnected: Boolean = false,
     val isPremium: Boolean = false,
     val creditSeconds: Long = 0L,
-    val premiumPrice: String = "—",
     val creditPrice: String = "—",
     val credit2Price: String = "—",
     val credit5Price: String = "—",
@@ -38,7 +37,6 @@ data class BillingUiState(
  */
 class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
-        const val PREMIUM_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
         const val RECORDING_CREDIT_SECONDS = 60L * 60L
         const val RECORDING_CREDIT_2H_PRODUCT_ID = "2._2000_credit"
@@ -96,7 +94,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
     }
 
     private fun queryProducts() {
-        val products = listOf(PREMIUM_PRODUCT_ID, RECORDING_CREDIT_PRODUCT_ID, RECORDING_CREDIT_2H_PRODUCT_ID, RECORDING_CREDIT_5H_PRODUCT_ID).map { id ->
+        val products = listOf(RECORDING_CREDIT_PRODUCT_ID, RECORDING_CREDIT_2H_PRODUCT_ID, RECORDING_CREDIT_5H_PRODUCT_ID).map { id ->
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(id)
                 .setProductType(BillingClient.ProductType.INAPP)
@@ -106,12 +104,10 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
         billingClient.queryProductDetailsAsync(params) { result, detailsResult ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                 detailsResult.productDetailsList.forEach { productDetails[it.productId] = it }
-                val premiumPrice = priceFor(PREMIUM_PRODUCT_ID)
                 val creditPrice = priceFor(RECORDING_CREDIT_PRODUCT_ID)
                 val credit2Price = priceFor(RECORDING_CREDIT_2H_PRODUCT_ID)
                 val credit5Price = priceFor(RECORDING_CREDIT_5H_PRODUCT_ID)
                 _state.value = _state.value.copy(
-                    premiumPrice = premiumPrice,
                     creditPrice = creditPrice,
                     credit2Price = credit2Price,
                     credit5Price = credit5Price,
@@ -196,21 +192,6 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
             return
         }
 
-        if (PREMIUM_PRODUCT_ID in purchase.products) {
-            prefs.edit().putBoolean(KEY_PREMIUM, true).apply()
-            _state.value = _state.value.copy(isPremium = true, message = "Premium Lifetime aktif. Watermark dihapus.")
-            if (!purchase.isAcknowledged) {
-                val params = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-                billingClient.acknowledgePurchase(params) { ackResult ->
-                    if (ackResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                        _state.value = _state.value.copy(message = "Premium aktif; konfirmasi transaksi akan dicoba kembali.")
-                    }
-                }
-            }
-        }
-
         val purchasedCreditSeconds = when {
             RECORDING_CREDIT_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_SECONDS
             RECORDING_CREDIT_2H_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_2H_SECONDS
@@ -224,13 +205,16 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
             if (token !in processed) {
                 processed.add(token)
                 val newBalance = prefs.getLong(KEY_CREDIT_SECONDS, 0L) + purchasedCreditSeconds
+                // Any paid credit package permanently unlocks watermark-free HUD and exports.
                 prefs.edit()
                     .putStringSet(KEY_PROCESSED_CREDIT_TOKENS, processed)
                     .putLong(KEY_CREDIT_SECONDS, newBalance)
+                    .putBoolean(KEY_PREMIUM, true)
                     .apply()
                 _state.value = _state.value.copy(
+                    isPremium = true,
                     creditSeconds = newBalance,
-                    message = "${purchasedCreditSeconds / 3600L * 1000L} kredit rekam (${purchasedCreditSeconds / 3600L} jam) berhasil ditambahkan."
+                    message = "${purchasedCreditSeconds / 3600L * 1000L} kredit (${purchasedCreditSeconds / 3600L} jam) berhasil ditambahkan. Watermark dihapus."
                 )
             }
 
