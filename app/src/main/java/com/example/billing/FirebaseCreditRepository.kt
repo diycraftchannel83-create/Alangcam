@@ -129,7 +129,7 @@ class AppsScriptCreditRepository(
             client.newCall(request).execute().use { response ->
                 val raw = response.body?.string().orEmpty()
                 if (!response.isSuccessful) {
-                    throw IllegalStateException("Backend HTTP \${response.code}: \${response.message}")
+                    throw IllegalStateException("Backend HTTP " + response.code + ": " + response.message)
                 }
                 val envelope = JSONObject(raw)
                 if (!envelope.optBoolean("ok", false)) {
