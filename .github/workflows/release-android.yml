@@ -153,6 +153,7 @@ jobs:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          CREDIT_API_URL: ${{ vars.CREDIT_API_URL }}
         run: gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
 
       - name: Collect APK, AAB, and diagnostics
