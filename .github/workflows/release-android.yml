@@ -84,11 +84,11 @@ jobs:
           version_name = ".".join(str(part) for part in next_version)
           lines[code_index] = indent_code + "versionCode = " + str(next_code)
           lines[name_index] = indent_name + 'versionName = "' + version_name + '"'
-          gradle_file.write_text("\\n".join(lines) + "\\n")
+          gradle_file.write_text("\n".join(lines) + "\n")
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write("version_code=" + str(next_code) + "\\n")
-              output.write("version_name=" + version_name + "\\n")
+              output.write("version_code=" + str(next_code) + "\n")
+              output.write("version_name=" + version_name + "\n")
           print("Release version: " + version_name + " (versionCode " + str(next_code) + ")")
           PY
 
@@ -352,8 +352,8 @@ jobs:
 
           version_name = ".".join(map(str, next_version))
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"version_code={next_code}\\n")
-              output.write(f"version_name={version_name}\\n")
+              output.write(f"version_code={next_code}\n")
+              output.write(f"version_name={version_name}\n")
           print(f"Release version: {version_name} (versionCode {next_code})")
           PY
 
