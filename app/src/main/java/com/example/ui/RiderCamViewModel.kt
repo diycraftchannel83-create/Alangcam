@@ -74,6 +74,36 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
     private var speedAlertArmed = true
     private var lastSpeedAlertAt = 0L
 
+    private fun speechMessage(key: String, language: String, speedLimitKmh: Int = 0): String {
+        val messages = mapOf(
+            "welcome" to mapOf(
+                "id" to "Selamat datang di CamRiderPro. Selamat berkendara dan nikmati perjalanan Anda!",
+                "en" to "Welcome to CamRiderPro. Ride safely and enjoy your journey!",
+                "ms" to "Selamat datang ke CamRiderPro. Pandu dengan selamat dan nikmati perjalanan anda!",
+                "ja" to "CamRiderProへようこそ。安全運転で、旅をお楽しみください！",
+                "ru" to "Добро пожаловать в CamRiderPro. Счастливого и безопасного пути!",
+                "th" to "ยินดีต้อนรับสู่ CamRiderPro ขอให้ขับขี่อย่างปลอดภัยและสนุกกับการเดินทาง!",
+                "vi" to "Chào mừng bạn đến với CamRiderPro. Hãy lái xe an toàn và tận hưởng hành trình!",
+                "zh" to "欢迎使用 CamRiderPro。祝您一路平安，享受旅程！",
+                "ko" to "CamRiderPro에 오신 것을 환영합니다. 안전하게 운전하고 즐거운 여행 되세요!",
+                "ar" to "مرحبًا بك في CamRiderPro. نتمنى لك قيادة آمنة ورحلة ممتعة!"
+            ),
+            "speed" to mapOf(
+                "id" to "Batas kecepatan diatur pada $speedLimitKmh kilometer per jam. Mohon kurangi kecepatan.",
+                "en" to "Speed limit is set to $speedLimitKmh kilometers per hour. Please slow down.",
+                "ms" to "Had laju ditetapkan pada $speedLimitKmh kilometer sejam. Sila perlahankan kenderaan.",
+                "ja" to "制限速度は時速 $speedLimitKmh キロに設定されています。速度を落としてください。",
+                "ru" to "Ограничение скорости установлено на $speedLimitKmh километров в час. Пожалуйста, снизьте скорость.",
+                "th" to "ตั้งค่าจำกัดความเร็วไว้ที่ $speedLimitKmh กิโลเมตรต่อชั่วโมง กรุณาลดความเร็ว",
+                "vi" to "Giới hạn tốc độ được đặt ở mức $speedLimitKmh ki-lô-mét một giờ. Vui lòng giảm tốc độ.",
+                "zh" to "限速设置为每小时 $speedLimitKmh 公里。请减速慢行。",
+                "ko" to "제한 속도는 시속 $speedLimitKmh킬로미터로 설정되어 있습니다. 속도를 줄여 주세요.",
+                "ar" to "تم ضبط حد السرعة على $speedLimitKmh كيلومتر في الساعة. يرجى تخفيف السرعة."
+            )
+        )
+        return messages[key]?.get(language) ?: messages[key]?.get("en").orEmpty()
+    }
+
     private fun speak(message: String) {
         if (!ttsReady || !_settings.value.voiceAssistantEnabled) return
         val utteranceId = "camrider-${System.currentTimeMillis()}"
@@ -111,9 +141,11 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                         Log.e("CamRiderVoice", "TTS playback failed ($errorCode): $utteranceId")
                     }
                 })
-                val result = voiceTts?.setLanguage(localeFor(_language.value))
+                val selectedLocale = localeFor(_language.value)
+                val result = voiceTts?.setLanguage(selectedLocale)
                 if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    voiceTts?.setLanguage(Locale.getDefault())
+                    // Never silently switch to the device default language.
+                    Log.w("CamRiderVoice", "TTS voice unavailable for selected language: ${_language.value} ($selectedLocale)")
                 }
                 voiceTts?.setSpeechRate(0.95f)
             }
@@ -136,7 +168,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 // Announce that exact configured threshold so the spoken value always
                 // matches the number shown in Settings (not the fluctuating GPS speed).
                 val configuredLimitKmh = prefs.speedLimitKmh
-                speak(if (_language.value == "id") "Batas kecepatan diatur pada $configuredLimitKmh kilometer per jam. Mohon kurangi kecepatan." else "Speed limit is set to $configuredLimitKmh kilometers per hour. Please slow down.")
+                speak(speechMessage("speed", _language.value, configuredLimitKmh))
             }
         }.launchIn(viewModelScope)
 
@@ -145,7 +177,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
                 // Short delay ensures AudioRecord stream is established without interference
                 viewModelScope.launch {
                     kotlinx.coroutines.delay(1200)
-                    speak(if (_language.value == "id") "Selamat datang di CamRiderPro. Selamat berkendara dan nikmati perjalanan Anda!" else "Welcome to CamRiderPro. Happy travelling and enjoy your ride!")
+                    speak(speechMessage("welcome", _language.value))
                 }
             }
             wasRecording = recording
