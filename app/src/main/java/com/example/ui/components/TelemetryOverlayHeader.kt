@@ -107,7 +107,7 @@ fun TelemetryOverlayHeader(
 
     Column(
         modifier = modifier
-            .width(210.dp)
+            .width(270.dp)
             .padding(top = 8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.Start
@@ -115,26 +115,21 @@ fun TelemetryOverlayHeader(
         // Left: Recording Status Pill
         Row(
             modifier = Modifier
-                .border(
-                    1.5.dp,
-                    if (isRecording) NeonRed.copy(alpha = 0.85f) else NeonGreen.copy(alpha = 0.5f),
-                    RoundedCornerShape(12.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .padding(horizontal = 4.dp, vertical = 6.dp)
                 .testTag("recording_status_pill"),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isRecording) {
                 Box(
                     modifier = Modifier
-                        .size(11.dp)
+                        .size(22.dp)
                         .alpha(pulseAlpha)
                         .background(NeonRed, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(7.dp))
                 Text(
                     text = "REC",
-                    fontSize = 14.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = NeonRed,
                     fontFamily = OrbitronFontFamily,
@@ -147,7 +142,7 @@ fun TelemetryOverlayHeader(
                 val timeFormatted = String.format("%02d:%02d:%02d", hours, minutes, seconds)
                 Text(
                     text = timeFormatted,
-                    fontSize = 15.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = HudWhite,
                     fontFamily = OrbitronFontFamily
@@ -157,12 +152,12 @@ fun TelemetryOverlayHeader(
                     imageVector = Icons.Default.Videocam,
                     contentDescription = null,
                     tint = NeonGreen,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(32.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "STANDBY • READY",
-                    fontSize = 13.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = NeonGreen,
                     fontFamily = RajdhaniFontFamily,
@@ -180,10 +175,9 @@ fun TelemetryOverlayHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.2.dp, CockpitBorder, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(horizontal = 2.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Start
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val gpsFixed = telemetry.isGpsFixed
@@ -192,12 +186,12 @@ fun TelemetryOverlayHeader(
                         imageVector = if (gpsFixed) Icons.Default.GpsFixed else Icons.Default.GpsNotFixed,
                         contentDescription = "GPS Status",
                         tint = gpsTint,
-                        modifier = Modifier.size(15.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = if (gpsFixed) "GPS LOCK (${telemetry.satellitesCount})" else "SEARCHING GPS...",
-                        fontSize = 11.5.sp,
+                        fontSize = 23.sp,
                         fontWeight = FontWeight.Bold,
                         color = gpsTint,
                         fontFamily = RajdhaniFontFamily,
@@ -226,14 +220,13 @@ fun TelemetryOverlayHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 10.dp, vertical = 3.5.dp),
+                    .padding(horizontal = 2.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "${settings.resolution.label.substringBefore(" ")}  ${settings.targetFps}FPS  H.265",
-                    fontSize = 11.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = HudWhite,
                     fontFamily = RajdhaniFontFamily,
@@ -245,12 +238,12 @@ fun TelemetryOverlayHeader(
                         imageVector = Icons.Default.Bedtime,
                         contentDescription = "Night Boost",
                         tint = NeonCyan,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = "HDR",
-                        fontSize = 10.5.sp,
+                        fontSize = 21.sp,
                         fontWeight = FontWeight.Bold,
                         color = NeonCyan,
                         fontFamily = RajdhaniFontFamily
