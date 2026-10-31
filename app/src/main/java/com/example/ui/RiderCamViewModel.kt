@@ -8,6 +8,7 @@ import android.speech.tts.TextToSpeech
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.camera.CameraRecordingManager
+import com.example.billing.BillingManager
 import com.example.data.local.RideDatabase
 import com.example.data.local.RideEntity
 import com.example.data.model.GpsTelemetry
@@ -31,6 +32,8 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
+    val billingManager = BillingManager(application)
+    val billingState: StateFlow<com.example.billing.BillingUiState> = billingManager.state
     val videoExporter = com.example.export.TelemetryVideoExporter(application)
     private val rideDao = RideDatabase.getInstance(application).rideDao()
 
@@ -80,6 +83,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
     }
 
     init {
+        billingManager.connect()
         voiceTts = TextToSpeech(application) { status ->
             ttsReady = status == TextToSpeech.SUCCESS
             if (ttsReady) {
@@ -156,6 +160,16 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         cameraManager.languageProvider = { _language.value }
         cameraManager.speedUnitLabelProvider = { _settings.value.speedUnit.label }
         cameraManager.overlayConfigProvider = { _overlayConfig.value }
+        cameraManager.premiumProvider = { billingManager.state.value.isPremium }
+        cameraManager.recordingCreditSecondsProvider = { billingManager.state.value.creditSeconds }
+        cameraManager.onRecordingCreditUsed = { seconds -> billingManager.deductRecordingSeconds(seconds) }
+        cameraManager.onRecordingLimitReached = { usedCredits ->
+            _bannerMessage.value = if (usedCredits) {
+                if (_language.value == "id") "Kredit rekam habis. Silakan top up untuk melanjutkan." else "Recording credit is exhausted. Top up to continue."
+            } else {
+                if (_language.value == "id") "Batas rekaman gratis 2 menit tercapai. Top up kredit untuk merekam hingga 4 jam." else "The 2-minute free recording limit has been reached. Top up credits for up to 4 hours."
+            }
+        }
         cameraManager.videoProfileLabelProvider = {
             "${_settings.value.resolution.label.substringBefore(" ")}  ${_settings.value.targetFps}FPS H.265"
         }
@@ -189,7 +203,11 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             gpsTracker.resetTrip()
             recordingTelemetrySnapshot = null
             cameraManager.startRecording(_settings.value.audioEnabled)
-            _bannerMessage.value = if (_language.value == "id") "Perekaman manual dimulai" else "Manual recording started"
+            _bannerMessage.value = if (billingManager.state.value.creditSeconds > 0L) {
+                if (_language.value == "id") "Perekaman dimulai menggunakan kredit rekam" else "Recording started using recording credits"
+            } else {
+                if (_language.value == "id") "Perekaman gratis dimulai (maksimal 2 menit)" else "Free recording started (2-minute limit)"
+            }
         }
     }
 
@@ -360,5 +378,6 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         super.onCleared()
         gpsTracker.stopTracking()
         cameraManager.release()
+        billingManager.close()
     }
 }
