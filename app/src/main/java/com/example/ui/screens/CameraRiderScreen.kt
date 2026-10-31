@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import com.example.ui.uiText
+
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
