@@ -677,11 +677,16 @@ class CameraRecordingManager(private val context: Context) {
                 )
 
                 if (config?.showSpeedometer != false) {
-                    val speedometerBottom = cy + radius +
+                    val wmRadius = minOf(w * 0.21f, h * 0.15f).coerceAtLeast(92f * scale)
+                    val wmCx = (w * (config?.speedometerXRatio ?: 0.65f))
+                        .coerceIn(wmRadius + 15f * scale, w - wmRadius - 15f * scale)
+                    val wmCy = (h * (config?.speedometerYRatio ?: 0.38f))
+                        .coerceIn(wmRadius + 15f * scale, h - wmRadius - 85f * scale)
+                    val speedometerBottom = wmCy + wmRadius +
                         (if (config?.showGearRpm != false) 48f else 16f) * scale
                     val speedometerY = (speedometerBottom + 8f * scale)
                         .coerceAtMost(h - smallHeight - 8f * scale)
-                    val speedometerLeft = (cx - smallWidth / 2f)
+                    val speedometerLeft = (wmCx - smallWidth / 2f)
                         .coerceIn(margin, w - margin - smallWidth)
                     canvas.drawBitmap(
                         mark, null,
