@@ -76,12 +76,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.ui.RiderCamViewModel
+import com.example.billing.BillingManager
 import com.example.ui.components.CompassMiniMapHud
 import com.example.ui.components.HandlebarControlBar
 import com.example.ui.components.ScreenLockOverlay
 import com.example.ui.components.SpeedometerCockpit
 import com.example.ui.components.TelemetryOverlayHeader
 import com.example.ui.components.TelemetryVideoBannerOverlay
+import com.example.ui.dialogs.MonetizationDialog
 import com.example.ui.dialogs.RideHistoryDialog
 import com.example.ui.dialogs.SettingsDialog
 import com.example.ui.theme.CockpitBlack
@@ -120,8 +122,10 @@ fun CameraRiderScreen(
     val rides by viewModel.rides.collectAsState()
     val bannerMessage by viewModel.bannerMessage.collectAsState()
     val isSimulating by viewModel.isSimulating.collectAsState()
+    val billingState by viewModel.billingState.collectAsState()
 
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showMonetizationDialog by remember { mutableStateOf(false) }
     var showHistoryDialog by remember { mutableStateOf(false) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showNavigationControls by remember { mutableStateOf(true) }
@@ -393,6 +397,19 @@ fun CameraRiderScreen(
             }
         }
 
+        // Creator watermark is visible in the preview for non-Premium users.
+        if (!billingState.isPremium) {
+            Text(
+                text = "Created by CamRiderPro",
+                color = HudWhite.copy(alpha = 0.82f),
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 14.dp, bottom = if (isLandscape) 12.dp else 18.dp)
+            )
+        }
+
         // LAYER 3 — ControlLayer: slides smoothly out to the right when screen is tapped
         // Shifted up by ~1cm (approx 38-42dp) above the bottom edge per user instruction
         AnimatedVisibility(
@@ -522,7 +539,27 @@ fun CameraRiderScreen(
                 onSettingsChange = { viewModel.updateSettings(it) },
                 onOverlayConfigChange = { viewModel.updateOverlayConfig(it) },
                 onToggleSimulation = { viewModel.toggleSimulation() },
+                onOpenMonetization = { showMonetizationDialog = true },
                 onDismiss = { showSettingsDialog = false }
+            )
+        }
+
+        if (showMonetizationDialog) {
+            MonetizationDialog(
+                state = billingState,
+                language = language,
+                onBuyPremium = {
+                    (context as? Activity)?.let {
+                        viewModel.billingManager.launchPurchase(it, BillingManager.PREMIUM_PRODUCT_ID)
+                    }
+                },
+                onBuyCredit = {
+                    (context as? Activity)?.let {
+                        viewModel.billingManager.launchPurchase(it, BillingManager.RECORDING_CREDIT_PRODUCT_ID)
+                    }
+                },
+                onRefresh = { viewModel.billingManager.refreshPurchases() },
+                onDismiss = { showMonetizationDialog = false }
             )
         }
 
