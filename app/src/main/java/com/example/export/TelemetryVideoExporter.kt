@@ -27,6 +27,7 @@ import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
 import com.example.data.model.RideSession
 import com.example.data.model.SpeedUnit
+import com.example.ui.uiText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +56,8 @@ class TelemetryVideoExporter(private val context: Context) {
 
     suspend fun exportVideoWithSpeedometerOverlay(
         session: RideSession,
-        speedUnit: SpeedUnit = SpeedUnit.KMH
+        speedUnit: SpeedUnit = SpeedUnit.KMH,
+        language: String = "id"
     ) = withContext(Dispatchers.IO) {
         try {
             _exportState.value = ExportState.Exporting(5)
@@ -231,10 +233,10 @@ class TelemetryVideoExporter(private val context: Context) {
             isAntiAlias = true
             typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         }
-        canvas.drawText("TOTAL DIST", centerX - 390f, centerY - 65f, labelPaint)
+        canvas.drawText(uiText(language, "TOTAL JARAK", "TOTAL DISTANCE"), centerX - 390f, centerY - 65f, labelPaint)
         canvas.drawText(String.format("%.2f km", session.distanceKm), centerX - 390f, centerY - 15f, valPaint)
 
-        canvas.drawText("MAX SPEED", centerX - 390f, centerY + 45f, labelPaint)
+        canvas.drawText(uiText(language, "KECEPATAN MAKS", "MAX SPEED"), centerX - 390f, centerY + 45f, labelPaint)
         val maxSpeedPaint = Paint(valPaint).apply { color = Color.argb(255, 255, 214, 0) }
         canvas.drawText("$maxSpeedDisplay ${speedUnit.label.uppercase()}", centerX - 390f, centerY + 95f, maxSpeedPaint)
 
@@ -324,7 +326,7 @@ class TelemetryVideoExporter(private val context: Context) {
             textAlign = Paint.Align.CENTER
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
-        canvas.drawText("GEAR", centerX + 245f, centerY + 22f, gearLabelPaint)
+        canvas.drawText(uiText(language, "GIGI", "GEAR"), centerX + 245f, centerY + 22f, gearLabelPaint)
 
         // Lat / Lon / Alt
         val coordPaint = Paint().apply {
@@ -335,7 +337,7 @@ class TelemetryVideoExporter(private val context: Context) {
         }
         canvas.drawText(String.format("LAT %.4f°", session.endLat), centerX + 180f, centerY + 74f, coordPaint)
         canvas.drawText(String.format("LON %.4f°", session.endLon), centerX + 180f, centerY + 102f, coordPaint)
-        canvas.drawText("AVG " + session.avgSpeedKmh.toInt() + " " + speedUnit.label, centerX + 180f, centerY + 130f, coordPaint)
+        canvas.drawText(uiText(language, "RATA-RATA", "AVG") + " " + session.avgSpeedKmh.toInt() + " " + speedUnit.label, centerX + 180f, centerY + 130f, coordPaint)
 
         // 3. Draw Bottom Banner: Accurate Date & Watermark
         val bottomBannerPaint = Paint().apply {
@@ -359,7 +361,7 @@ class TelemetryVideoExporter(private val context: Context) {
             isAntiAlias = true
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
-        canvas.drawText("RIDERCAM PRO • GPS TELEMETRY & DASHCAM", width - 700f, height - 16f, brandPaint)
+        canvas.drawText("CAMRIDERPRO • " + uiText(language, "TELEMETRI GPS & DASHCAM", "GPS TELEMETRY & DASHCAM"), width - 700f, height - 16f, brandPaint)
 
         return bitmap
     }
