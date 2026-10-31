@@ -129,7 +129,7 @@ fun SettingsDialog(
                 )
                 SettingsCard {
                     Text(
-                        text = uiText(language, "Premium Lifetime hanya menghapus watermark. Kredit rekam menambah durasi hingga 4 jam.", "Premium Lifetime removes only the watermark. Recording credits add up to 4 hours."),
+                        text = uiText(language, "Setiap pembelian kredit menghapus watermark secara permanen. Kredit menambah durasi rekaman.", "Every credit purchase permanently removes the watermark. Credits add recording time."),
                         fontSize = 11.sp,
                         color = HudMuted
                     )
@@ -447,8 +447,8 @@ fun SettingsDialog(
                     Text(
                         text = uiText(
                             language,
-                            "Watermark otomatis tampil pada akun Free dan hanya dihapus setelah Premium Lifetime dibeli.",
-                            "Watermark is automatically shown on Free accounts and is removed only after Premium Lifetime is purchased."
+                            "Watermark otomatis tampil pada pengguna gratis dan dihapus permanen setelah membeli paket kredit pertama.",
+                            "Watermark is shown to free users and permanently removed after the first credit package purchase."
                         ),
                         fontSize = 11.sp,
                         color = HudMuted
