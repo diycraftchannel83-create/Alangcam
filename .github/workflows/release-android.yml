@@ -47,8 +47,8 @@ jobs:
 
           path = Path("app/build.gradle.kts")
           text = path.read_text()
-          code_match = re.search(r"(?m)^\\s*versionCode\\s*=\\s*(\\d+)\\s*$", text)
-          name_match = re.search(r'(?m)^\\s*versionName\\s*=\\s*"([^"]+)"\\s*$', text)
+          code_match = re.search(r"(?m)^\s*versionCode\s*=\s*(\d+)\s*$", text)
+          name_match = re.search(r'(?m)^\s*versionName\s*=\s*"([^"]+)"\s*$', text)
           if not code_match or not name_match:
               raise SystemExit("versionCode/versionName not found in app/build.gradle.kts")
 
@@ -56,7 +56,7 @@ jobs:
           current_name = name_match.group(1)
 
           def parse_version(value):
-              match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)", value.strip())
+              match = re.fullmatch(r"v?(\d+)\\.(\d+)\\.(\d+)", value.strip())
               return tuple(map(int, match.groups())) if match else None
 
           versions = []
@@ -81,13 +81,13 @@ jobs:
 
           version_name = ".".join(map(str, next_version))
           next_code = current_code + 1
-          text = re.sub(r"(?m)^(\\s*versionCode\\s*=\\s*)\\d+\\s*$", rf"\\g<1>{next_code}", text, count=1)
-          text = re.sub(r'(?m)^(\\s*versionName\\s*=\\s*")[^"]+(".*)$', rf"\\g<1>{version_name}\\g<2>", text, count=1)
+          text = re.sub(r"(?m)^(\s*versionCode\s*=\s*)\d+\s*$", rf"\g<1>{next_code}", text, count=1)
+          text = re.sub(r'(?m)^(\s*versionName\s*=\s*")[^"]+(".*)$', rf"\g<1>{version_name}\g<2>", text, count=1)
           path.write_text(text)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"version_code={next_code}\\n")
-              output.write(f"version_name={version_name}\\n")
+              output.write(f"version_code={next_code}\n")
+              output.write(f"version_name={version_name}\n")
           print(f"Building {version_name}, versionCode {next_code}")
           PY
 
