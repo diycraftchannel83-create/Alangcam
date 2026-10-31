@@ -327,7 +327,6 @@ fun CameraRiderScreen(
                     if (!overlayConfig.isSpeedometerLocked) {
                         Row(
                             modifier = Modifier
-                                .background(CockpitCard.copy(alpha = 0.92f), RoundedCornerShape(12.dp))
                                 .border(1.2.dp, NeonAmber, RoundedCornerShape(12.dp))
                                 .clickable { viewModel.toggleSpeedometerLock() }
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
