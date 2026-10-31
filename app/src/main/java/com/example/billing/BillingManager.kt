@@ -37,6 +37,7 @@ data class BillingUiState(
  */
 class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
+        private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
         const val RECORDING_CREDIT_SECONDS = 60L * 60L
         const val RECORDING_CREDIT_2H_PRODUCT_ID = "2._2000_credit"
@@ -192,6 +193,17 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
             return
         }
 
+        // Continue honoring historical purchases of the retired remove_watermark SKU.
+        if (LEGACY_WATERMARK_PRODUCT_ID in purchase.products) {
+            prefs.edit().putBoolean(KEY_PREMIUM, true).apply()
+            _state.value = _state.value.copy(isPremium = true, message = "Watermark sudah terbuka dari pembelian sebelumnya.")
+            if (!purchase.isAcknowledged) {
+                val params = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+                billingClient.acknowledgePurchase(params) { }
+            }
+        }
         val purchasedCreditSeconds = when {
             RECORDING_CREDIT_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_SECONDS
             RECORDING_CREDIT_2H_PRODUCT_ID in purchase.products -> RECORDING_CREDIT_2H_SECONDS
