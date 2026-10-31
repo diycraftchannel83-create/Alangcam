@@ -21,6 +21,10 @@ android {
     versionName = "1.0.5"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    val creditApiUrl = (project.findProperty("CREDIT_API_URL") as String?)
+      ?: System.getenv("CREDIT_API_URL")
+      ?: ""
+    buildConfigField("String", "CREDIT_API_URL", "\"$creditApiUrl\"")
   }
 
   // Do not remove or modify these signingConfigs. They are necessary for building, installing,
@@ -121,8 +125,6 @@ dependencies {
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.kotlinx.coroutines.play.services)
   implementation(libs.firebase.auth)
-  implementation(libs.firebase.firestore)
-  implementation(libs.firebase.functions)
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
