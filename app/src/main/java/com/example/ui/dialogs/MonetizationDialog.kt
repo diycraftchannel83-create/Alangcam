@@ -36,7 +36,6 @@ import com.example.ui.theme.NeonYellow
 fun MonetizationDialog(
     state: BillingUiState,
     language: String,
-    onBuyPremium: () -> Unit,
     onBuyCredit: () -> Unit,
     onBuyCredit2Hours: () -> Unit,
     onBuyCredit5Hours: () -> Unit,
@@ -57,7 +56,7 @@ fun MonetizationDialog(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = uiText(language, "UPGRADE & KREDIT REKAM", "UPGRADE & RECORDING CREDITS"),
+                    text = uiText(language, "KREDIT REKAM", "RECORDING CREDITS"),
                     color = NeonYellow,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Black
@@ -90,37 +89,6 @@ fun MonetizationDialog(
                 Divider(color = CockpitBorder)
                 Spacer(modifier = Modifier.height(14.dp))
 
-                Text("PREMIUM LIFETIME", color = HudWhite, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    text = if (state.isPremium) {
-                        uiText(language, "Aktif — watermark dihapus permanen. Batas durasi tetap berlaku.", "Active — watermark permanently removed. Recording limits still apply.")
-                    } else {
-                        uiText(language, "Hapus watermark Created by CamRiderPro secara permanen. Tidak membuka durasi tanpa batas.", "Permanently remove the Created by CamRiderPro watermark. Does not unlock unlimited recording.")
-                    },
-                    color = HudMuted,
-                    fontSize = 11.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = onBuyPremium,
-                    enabled = state.isConnected && !state.isPremium && state.premiumPrice != "—" && state.premiumPrice != "Belum tersedia",
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = Color.Black)
-                ) {
-                    Text(
-                        text = if (state.isPremium) {
-                            uiText(language, "PREMIUM AKTIF", "PREMIUM ACTIVE")
-                        } else {
-                            "${uiText(language, "BELI PREMIUM", "BUY PREMIUM")} • ${state.premiumPrice}"
-                        },
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = CockpitBorder)
-                Spacer(modifier = Modifier.height(14.dp))
-
                 Text(
                     text = uiText(language, "KREDIT REKAM • 1.000 KREDIT", "RECORDING CREDIT • 1,000 CREDITS"),
                     color = HudWhite,
@@ -128,7 +96,7 @@ fun MonetizationDialog(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = uiText(language, "Tambahkan 1.000 kredit untuk 1 jam rekaman. Kredit dapat ditumpuk dan saldo berkurang sesuai durasi rekaman. Watermark tetap ada jika belum membeli Premium.", "Add 1,000 credits for 1 hour of recording. Credits stack and are deducted according to recording duration. Watermark stays unless Premium is purchased."),
+                    text = uiText(language, "Beli kredit untuk menambah durasi rekaman. Setiap pembelian kredit menghapus watermark pada HUD dan video secara permanen.", "Buy credits to add recording time. Any credit purchase permanently removes the watermark from the HUD and recorded videos."),
                     color = HudMuted,
                     fontSize = 11.sp
                 )
@@ -174,7 +142,7 @@ fun MonetizationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onRefresh) {
-                        Text(uiText(language, "PULIHKAN PREMIUM", "RESTORE PREMIUM"), color = NeonGreen)
+                        Text(uiText(language, "PERBARUI STATUS PEMBELIAN", "REFRESH PURCHASE STATUS"), color = NeonGreen)
                     }
                     TextButton(onClick = onDismiss) {
                         Text(uiText(language, "TUTUP", "CLOSE"), color = HudMuted)
