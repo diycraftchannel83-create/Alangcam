@@ -62,11 +62,17 @@ class FirebaseCreditRepository(
         return (data["remainingSeconds"] as? Number)?.toLong() ?: 0L
     }
 
-    suspend fun reportCreditRecordingUsage(sessionId: String, elapsedSeconds: Long): Long {
-        // elapsedSeconds is intentionally ignored; the server measures time from its own timestamps.
+    suspend fun heartbeatCreditRecording(sessionId: String): Map<*, *> {
+        // Server timestamps determine billing; no client elapsed time is accepted.
         val result = functions.getHttpsCallable("heartbeatCreditRecording")
             .call(mapOf("sessionId" to sessionId)).await()
-        val data = result.data as? Map<*, *> ?: emptyMap<Any, Any>()
+        @Suppress("UNCHECKED_CAST")
+        return result.data as? Map<*, *> ?: emptyMap<Any, Any>()
+    }
+
+    @Deprecated("Use heartbeatCreditRecording; server owns the billing clock.")
+    suspend fun reportCreditRecordingUsage(sessionId: String, elapsedSeconds: Long): Long {
+        val data = heartbeatCreditRecording(sessionId)
         return (data["remainingSeconds"] as? Number)?.toLong() ?: 0L
     }
 

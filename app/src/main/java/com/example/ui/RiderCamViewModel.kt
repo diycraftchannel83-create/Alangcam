@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.camera.CameraRecordingManager
 import com.example.ui.uiText
 import com.example.billing.BillingManager
+import com.example.billing.FirebaseCreditRepository
 import com.example.data.local.RideDatabase
 import com.example.data.local.RideEntity
 import com.example.data.model.GpsTelemetry
@@ -23,6 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.io.File
 import java.text.SimpleDateFormat
@@ -33,8 +38,13 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
-    val billingManager = BillingManager(application)
+    private val creditRepository = FirebaseCreditRepository()
+    val billingManager = BillingManager(application, creditRepository)
     val billingState: StateFlow<com.example.billing.BillingUiState> = billingManager.state
+    private var creditSessionId: String? = null
+    private var creditHeartbeatJob: Job? = null
+    private var creditSessionInitialSeconds: Long? = null
+    private var isStartingRecording = false
     val videoExporter = com.example.export.TelemetryVideoExporter(application)
     private val rideDao = RideDatabase.getInstance(application).rideDao()
 
@@ -173,6 +183,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         }.launchIn(viewModelScope)
 
         isRecording.onEach { recording ->
+            if (!recording && wasRecording) finishServerCreditSession()
             if (recording && !wasRecording && _settings.value.welcomeVoiceEnabled) {
                 // Short delay ensures AudioRecord stream is established without interference
                 viewModelScope.launch {
@@ -194,8 +205,11 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         cameraManager.speedUnitLabelProvider = { _settings.value.speedUnit.label }
         cameraManager.overlayConfigProvider = { _overlayConfig.value }
         cameraManager.premiumProvider = { billingManager.state.value.isPremium }
-        cameraManager.recordingCreditSecondsProvider = { billingManager.state.value.creditSeconds }
-        cameraManager.onRecordingCreditUsed = { seconds -> billingManager.deductRecordingSeconds(seconds) }
+        cameraManager.recordingCreditSecondsProvider = {
+            creditSessionInitialSeconds ?: billingManager.state.value.creditSeconds
+        }
+        // Credit deductions are server-owned and applied by heartbeat/finish Cloud Functions.
+        cameraManager.onRecordingCreditUsed = null
         cameraManager.onRecordingLimitReached = { usedCredits ->
             _bannerMessage.value = if (usedCredits) {
                 uiText(_language.value, "Kredit rekam habis. Silakan top up untuk melanjutkan.", "Recording credit is exhausted. Top up to continue.")
@@ -214,6 +228,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
         cameraManager.onRecordingError = { msg ->
             _bannerMessage.value = msg
+            finishServerCreditSession()
         }
     }
 
@@ -231,15 +246,109 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             recordingTelemetrySnapshot = telemetry.value
             cameraManager.stopRecording()
             _bannerMessage.value = uiText(_language.value, "Perekaman selesai & tersimpan otomatis", "Recording completed and saved automatically")
-        } else {
-            // Every manual recording starts with a clean trip accumulator.
-            gpsTracker.resetTrip()
-            recordingTelemetrySnapshot = null
-            cameraManager.startRecording(_settings.value.audioEnabled)
-            _bannerMessage.value = if (billingManager.state.value.creditSeconds > 0L) {
-                uiText(_language.value, "Perekaman dimulai menggunakan kredit rekam", "Recording started using recording credits")
-            } else {
-                uiText(_language.value, "Perekaman gratis dimulai (maksimal 20 menit)", "Free recording started (20-minute limit)")
+            return
+        }
+        if (isStartingRecording) return
+        isStartingRecording = true
+        viewModelScope.launch {
+            try {
+                val availableSeconds = billingManager.state.value.creditSeconds.coerceAtLeast(0L)
+                if (availableSeconds > 0L) {
+                    creditRepository.signInAnonymouslyIfNeeded()
+                    val sessionId = UUID.randomUUID().toString().replace("-", "")
+                    val serverBalance = creditRepository.startCreditRecording(sessionId)
+                    if (serverBalance <= 0L) {
+                        throw IllegalStateException("Saldo kredit rekam kosong.")
+                    }
+                    creditSessionId = sessionId
+                    creditSessionInitialSeconds = serverBalance
+                } else {
+                    creditSessionId = null
+                    creditSessionInitialSeconds = null
+                }
+
+                // Every manual recording starts with a clean trip accumulator.
+                gpsTracker.resetTrip()
+                recordingTelemetrySnapshot = null
+                cameraManager.startRecording(_settings.value.audioEnabled)
+                if (creditSessionId != null) {
+                    startCreditHeartbeat(creditSessionId!!)
+                    _bannerMessage.value = uiText(
+                        _language.value,
+                        "Perekaman dimulai menggunakan kredit rekam",
+                        "Recording started using recording credits"
+                    )
+                } else {
+                    _bannerMessage.value = uiText(
+                        _language.value,
+                        "Perekaman gratis dimulai (maksimal 20 menit)",
+                        "Free recording started (20-minute limit)"
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("CamRiderCredit", "Unable to start recording credit session", e)
+                finishServerCreditSession()
+                _bannerMessage.value = uiText(
+                    _language.value,
+                    "Tidak dapat memulai sesi kredit. Periksa koneksi internet dan saldo kredit.",
+                    "Could not start a credit session. Check your internet connection and credit balance."
+                )
+            } finally {
+                isStartingRecording = false
+            }
+        }
+    }
+
+    private fun startCreditHeartbeat(sessionId: String) {
+        creditHeartbeatJob?.cancel()
+        creditHeartbeatJob = viewModelScope.launch {
+            while (isActive && creditSessionId == sessionId) {
+                delay(15_000L)
+                if (!cameraManager.isRecording.value || creditSessionId != sessionId) break
+                try {
+                    val result = creditRepository.heartbeatCreditRecording(sessionId)
+                    val remaining = (result["remainingSeconds"] as? Number)?.toLong() ?: 0L
+                    creditSessionInitialSeconds = remaining
+                    val expired = result["expired"] == true
+                    val exhausted = result["exhausted"] == true
+                    if (expired || exhausted || remaining <= 0L) {
+                        creditSessionId = null
+                        creditSessionInitialSeconds = null
+                        cameraManager.stopRecording()
+                        _bannerMessage.value = uiText(
+                            _language.value,
+                            "Sesi kredit berakhir. Perekaman dihentikan.",
+                            "Recording credit session ended. Recording stopped."
+                        )
+                        break
+                    }
+                } catch (e: Exception) {
+                    Log.e("CamRiderCredit", "Credit heartbeat failed; stopping to prevent unbilled recording", e)
+                    cameraManager.stopRecording()
+                    _bannerMessage.value = uiText(
+                        _language.value,
+                        "Koneksi kredit terputus. Perekaman dihentikan demi keamanan saldo.",
+                        "Credit connection lost. Recording stopped to protect your balance."
+                    )
+                    finishServerCreditSession()
+                    break
+                }
+            }
+        }
+    }
+
+    private fun finishServerCreditSession() {
+        val sessionId = creditSessionId ?: return
+        creditSessionId = null
+        creditSessionInitialSeconds = null
+        creditHeartbeatJob?.cancel()
+        creditHeartbeatJob = null
+        viewModelScope.launch {
+            try {
+                creditRepository.finishCreditRecording(sessionId)
+            } catch (e: Exception) {
+                // A later stale-session expiry is safer than charging from an untrusted client clock.
+                Log.w("CamRiderCredit", "Could not finalize server credit session", e)
             }
         }
     }

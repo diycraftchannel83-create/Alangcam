@@ -121,6 +121,25 @@ export const startCreditRecording = onCall(
         if (existing.get("status") !== "active") throw new HttpsError("failed-precondition", "Session is not active.");
         return {sessionId, remainingSeconds: existing.get("remainingSeconds") ?? 0};
       }
+      const activeSessions = await tx.get(
+        db.collection("recording_sessions")
+          .where("uid", "==", uid)
+          .where("status", "==", "active")
+          .limit(10)
+      );
+      const liveSessions = activeSessions.docs.filter((doc) => {
+        const lastHeartbeat = doc.get("lastHeartbeatAt") as Timestamp | undefined;
+        const stale = !lastHeartbeat ||
+          now.toMillis() - lastHeartbeat.toMillis() > MAX_HEARTBEAT_GAP_SECONDS * 1000;
+        if (stale) {
+          tx.update(doc.ref, {status: "expired", finishedAt: now});
+          return false;
+        }
+        return doc.id !== sessionId;
+      });
+      if (liveSessions.length > 0) {
+        throw new HttpsError("already-exists", "Another recording session is already active for this account.");
+      }
       const wallet = await tx.get(walletRef);
       const balance = wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0;
       if (balance <= 0) throw new HttpsError("failed-precondition", "No recording credits.");
