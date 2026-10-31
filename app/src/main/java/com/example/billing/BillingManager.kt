@@ -36,9 +36,9 @@ data class BillingUiState(
  */
 class BillingManager(context: Context) : PurchasesUpdatedListener {
     companion object {
-        const val PREMIUM_PRODUCT_ID = "camriderpro_premium_unlock"
-        const val RECORDING_CREDIT_PRODUCT_ID = "camriderpro_record_4h"
-        const val RECORDING_CREDIT_SECONDS = 4L * 60L * 60L
+        const val PREMIUM_PRODUCT_ID = "remove_watermark"
+        const val RECORDING_CREDIT_PRODUCT_ID = "1_1000_credit"
+        const val RECORDING_CREDIT_SECONDS = 60L * 60L
         private const val PREFS_NAME = "camriderpro_billing"
         private const val KEY_PREMIUM = "premium_owned"
         private const val KEY_CREDIT_SECONDS = "recording_credit_seconds"
@@ -214,7 +214,7 @@ class BillingManager(context: Context) : PurchasesUpdatedListener {
                     .apply()
                 _state.value = _state.value.copy(
                     creditSeconds = newBalance,
-                    message = "Kredit rekam 4 jam berhasil ditambahkan."
+                    message = "1.000 kredit rekam (1 jam) berhasil ditambahkan."
                 )
             }
 
