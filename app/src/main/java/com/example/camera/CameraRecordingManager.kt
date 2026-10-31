@@ -647,15 +647,48 @@ class CameraRecordingManager(private val context: Context) {
                 context.resources, com.example.R.drawable.watermark_camrider
             )?.also { watermarkBitmap = it }
             if (mark != null && !mark.isRecycled) {
-                val targetWidth = (w * 0.22f).coerceIn(150f * scale, 420f * scale)
-                val targetHeight = targetWidth * mark.height / mark.width.toFloat()
-                val right = w - margin
-                val bottom = h - 16f * scale
-                val dst = RectF(right - targetWidth, bottom - targetHeight, right, bottom)
                 val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
                     alpha = 205
                 }
-                canvas.drawBitmap(mark, null, dst, watermarkPaint)
+                val aspect = mark.height / mark.width.toFloat()
+
+                // Primary watermark at the lower-right edge of the recorded frame.
+                val mainWidth = (w * 0.22f).coerceIn(150f * scale, 420f * scale)
+                val mainHeight = mainWidth * aspect
+                val right = w - margin
+                val bottom = h - 16f * scale
+                canvas.drawBitmap(
+                    mark, null,
+                    RectF(right - mainWidth, bottom - mainHeight, right, bottom),
+                    watermarkPaint
+                )
+
+                // Additional brand marks requested for free users: one below the
+                // telemetry dock and one directly below the speedometer assembly.
+                val smallWidth = (w * 0.16f).coerceIn(112f * scale, 300f * scale)
+                val smallHeight = smallWidth * aspect
+                val telemetryBottom = telemTop + telemHeight
+                val telemetryY = (telemetryBottom + 8f * scale)
+                    .coerceAtMost(h - smallHeight - 8f * scale)
+                canvas.drawBitmap(
+                    mark, null,
+                    RectF(margin, telemetryY, margin + smallWidth, telemetryY + smallHeight),
+                    watermarkPaint
+                )
+
+                if (config?.showSpeedometer != false) {
+                    val speedometerBottom = cy + radius +
+                        (if (config?.showGearRpm != false) 48f else 16f) * scale
+                    val speedometerY = (speedometerBottom + 8f * scale)
+                        .coerceAtMost(h - smallHeight - 8f * scale)
+                    val speedometerLeft = (cx - smallWidth / 2f)
+                        .coerceIn(margin, w - margin - smallWidth)
+                    canvas.drawBitmap(
+                        mark, null,
+                        RectF(speedometerLeft, speedometerY, speedometerLeft + smallWidth, speedometerY + smallHeight),
+                        watermarkPaint
+                    )
+                }
             }
         }
 
