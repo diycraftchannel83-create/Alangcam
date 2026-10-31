@@ -201,40 +201,7 @@ fun TelemetryOverlayHeader(
 
             }
 
-            // Bottom: Keterangan Rekaman 1080p with matching column width
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp, vertical = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "${settings.resolution.label.substringBefore(" ")}  ${settings.targetFps}FPS  H.265",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = HudWhite,
-                    fontFamily = RajdhaniFontFamily,
-                    letterSpacing = 0.5.sp
-                )
-                if (isNightBoostActive) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Icon(
-                        imageVector = Icons.Default.Bedtime,
-                        contentDescription = "Night Boost",
-                        tint = NeonCyan,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    Text(
-                        text = "HDR",
-                        fontSize = 21.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NeonCyan,
-                        fontFamily = RajdhaniFontFamily
-                    )
-                }
-            }
+
         }
     }
 }
