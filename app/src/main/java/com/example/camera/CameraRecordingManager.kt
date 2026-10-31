@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color as AndroidColor
 import android.graphics.Matrix
@@ -71,6 +72,7 @@ class CameraRecordingManager(private val context: Context) {
     private var bufferA: Bitmap? = null
     private var bufferB: Bitmap? = null
     private var activeFrontBitmap: Bitmap? = null
+    private var watermarkBitmap: Bitmap? = null
     private var currentAllocatedWidth = 0
     private var currentAllocatedHeight = 0
     private var cachedHudLastRenderMs = 0L
@@ -639,14 +641,22 @@ class CameraRecordingManager(private val context: Context) {
         // Free users see a small creator watermark in both the live HUD and encoded video.
         // Premium Lifetime removes this mark only; recording limits remain unchanged.
         if (premiumProvider?.invoke() != true) {
-            val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = AndroidColor.argb(205, 255, 255, 255)
-                textSize = 18f * scale
-                textAlign = Paint.Align.RIGHT
-                typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                setShadowLayer(4f * scale, 0f, 1f * scale, AndroidColor.BLACK)
+            // Use the supplied transparent PNG as the brand watermark in the live
+            // CameraX overlay so it is also permanently burned into recorded MP4 frames.
+            val mark = watermarkBitmap ?: BitmapFactory.decodeResource(
+                context.resources, com.example.R.drawable.watermark_camrider
+            )?.also { watermarkBitmap = it }
+            if (mark != null && !mark.isRecycled) {
+                val targetWidth = (w * 0.22f).coerceIn(150f * scale, 420f * scale)
+                val targetHeight = targetWidth * mark.height / mark.width.toFloat()
+                val right = w - margin
+                val bottom = h - 16f * scale
+                val dst = RectF(right - targetWidth, bottom - targetHeight, right, bottom)
+                val watermarkPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+                    alpha = 205
+                }
+                canvas.drawBitmap(mark, null, dst, watermarkPaint)
             }
-            canvas.drawText("Created by CamRiderPro", w - margin, h - 18f * scale, watermarkPaint)
         }
 
         // Bottom area remains empty, keeping road view completely unobstructed
