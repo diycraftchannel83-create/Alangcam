@@ -94,7 +94,7 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = onBuyPremium,
-                    enabled = state.isConnected && !state.isPremium,
+                    enabled = state.isConnected && !state.isPremium && state.premiumPrice != "—" && state.premiumPrice != "Belum tersedia",
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonGreen, contentColor = Color.Black)
                 ) {
@@ -126,7 +126,7 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = onBuyCredit,
-                    enabled = state.isConnected,
+                    enabled = state.isConnected && state.creditPrice != "—" && state.creditPrice != "Belum tersedia",
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
                 ) {
@@ -147,7 +147,7 @@ fun MonetizationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onRefresh) {
-                        Text(if (isId) "PULIHKAN PEMBELIAN" else "RESTORE PURCHASES", color = NeonGreen)
+                        Text(if (isId) "PULIHKAN PREMIUM" else "RESTORE PREMIUM", color = NeonGreen)
                     }
                     TextButton(onClick = onDismiss) {
                         Text(if (isId) "TUTUP" else "CLOSE", color = HudMuted)
