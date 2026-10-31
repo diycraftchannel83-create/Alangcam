@@ -160,7 +160,8 @@ class TelemetryVideoExporter(private val context: Context) {
         width: Int,
         height: Int,
         session: RideSession,
-        speedUnit: SpeedUnit
+        speedUnit: SpeedUnit,
+        language: String = "id"
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
