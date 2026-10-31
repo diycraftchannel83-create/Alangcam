@@ -154,9 +154,9 @@ fun SettingsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 // Language preference
-                SettingsSectionHeader(if (language == "id") "BAHASA APLIKASI" else "APP LANGUAGE", Icons.Default.Settings)
+                SettingsSectionHeader(uiText(language, "BAHASA APLIKASI", "APP LANGUAGE"), Icons.Default.Settings)
                 SettingsCard {
-                    Text(if (language == "id") "Pilih Bahasa" else "Choose Language", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
+                    Text(uiText(language, "Pilih Bahasa", "Choose Language"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
                     Column(verticalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.padding(top = 8.dp)) {
                         listOf(
                             "id" to "Indonesia", "en" to "English", "ms" to "Malaysia",
