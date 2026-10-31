@@ -16,8 +16,9 @@ android {
     applicationId = "com.winsmediatama.camriderpro"
     minSdk = 24
     targetSdk = 36
-    versionCode = 2
-    versionName = "1.0.1"
+    // Version 2 is already uploaded to Play Console. Increment for the next upload.
+    versionCode = 3
+    versionName = "1.0.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -43,8 +44,14 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
+      // Enable R8 so the release AAB carries mapping.txt for Play Console crash deobfuscation.
+      // Project classes are kept by proguard-rules.pro to avoid reflection-sensitive app changes.
+      isMinifyEnabled = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      // Include native debug information in the release App Bundle for Play Console symbolication.
+      ndk {
+        debugSymbolLevel = "FULL"
+      }
       // Do not remove or modify this signingConfig assignment. It is necessary for Android apps in
       // AI Studio.
       signingConfig = signingConfigs.getByName("release")
@@ -86,11 +93,9 @@ secrets {
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 // Some unused dependencies are commented out below instead of being removed.
-// This makes it easy to add them back in the future if needed.
 dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(platform(libs.firebase.bom))
-  // implementation(libs.accompanist.permissions)
   implementation(libs.androidx.activity.compose)
   implementation(libs.androidx.camera.camera2)
   implementation(libs.androidx.camera.core)
@@ -105,27 +110,13 @@ dependencies {
   implementation(libs.androidx.compose.ui.graphics)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
-  // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
-  // implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  // implementation(libs.firebase.ai)
-  // Uncomment to use Firestore:
-  // implementation(libs.firebase.firestore)
-
-  // Uncomment ALL FOUR of the following dependencies together to use Firebase Auth and Google
-  // Sign-In via Credential Manager:
-  // implementation(libs.firebase.auth)
-  // implementation(libs.androidx.credentials)
-  // implementation(libs.androidx.credentials.play.services)
-  // implementation(libs.googleid)
-  // implementation(libs.firebase.appcheck.recaptcha)
-  // implementation(libs.firebase.appcheck.debug)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
