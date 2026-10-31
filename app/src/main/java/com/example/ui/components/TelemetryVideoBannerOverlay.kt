@@ -138,7 +138,7 @@ fun TelemetryVideoBannerOverlay(
 
             VerticalStatItem(
                 icon = Icons.Default.Speed,
-                label = "TOP SPEED",
+                label = uiText(language, "KECEPATAN MAKS", "MAX SPEED"),
                 value = "$max ${speedUnit.label.uppercase()}",
                 subText = uiText(language, "REKOR TERTINGGI", "PEAK RECORD"),
                 accentColor = NeonAmber
