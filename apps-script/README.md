@@ -19,13 +19,13 @@ Apps Script is suitable for a low-volume pilot, not a high-concurrency productio
 
 ## Setup
 
-1. Keep Firebase Authentication enabled in the existing Firebase project. Anonymous Authentication is used to obtain a Firebase ID token. Do not disable the provider until a durable account-linking plan is ready.
+1. Keep Firebase Authentication enabled in the existing Firebase project and enable the Anonymous sign-in provider. Anonymous Authentication is used only to obtain a Firebase ID token and is available without upgrading to Blaze. Do not disable the provider until a durable account-linking plan is ready.
 2. Create a Google Sheet for CamRiderPro wallet data and copy its spreadsheet ID from the URL.
 3. Open https://script.google.com and create a standalone Apps Script project.
 4. Add `Code.gs` from this directory and set the project manifest to `appsscript.json`.
 5. In **Project Settings → Script Properties**, add:
    - `SPREADSHEET_ID`: the spreadsheet ID from step 2.
-   - `FIREBASE_WEB_API_KEY`: the API key from the existing app's `google-services.json` (this is a Firebase client API key, not a private credential).
+   - `FIREBASE_WEB_API_KEY`: an API key for the Firebase Identity Toolkit API. You may use the key from `google-services.json` only if it is not restricted to Android-app-only usage; otherwise create a separate API key in Google Cloud Console, restrict it to the Identity Toolkit API, and leave application restrictions suitable for server-side Apps Script calls. This API key is not a private service-account credential.
    - `PLAY_SERVICE_ACCOUNT_JSON`: the complete contents of the Google Play service-account JSON private-key file. Never put this value in GitHub, Android resources, or a spreadsheet.
 6. In the Apps Script editor, select and run `setupDatabase` once. Review and grant the requested spreadsheet/external-request permissions.
 7. Enable **Google Play Android Developer API** in the Google Cloud project associated with the service account. In Play Console → Users and permissions, grant the service-account email permission to view financial/order data needed to verify purchases.
