@@ -200,7 +200,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             _bannerMessage.value = if (usedCredits) {
                 uiText(_language.value, "Kredit rekam habis. Silakan top up untuk melanjutkan.", "Recording credit is exhausted. Top up to continue.")
             } else {
-                uiText(_language.value, "Batas rekaman gratis 2 menit tercapai. Top up kredit untuk merekam hingga 4 jam.", "The 2-minute free recording limit has been reached. Top up credits for up to 4 hours.")
+                uiText(_language.value, "Batas rekaman gratis 20 menit tercapai. Beli kredit untuk menambah durasi rekaman.", "The 20-minute free recording limit has been reached. Buy credits to add recording time.")
             }
         }
         cameraManager.videoProfileLabelProvider = {
@@ -239,7 +239,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
             _bannerMessage.value = if (billingManager.state.value.creditSeconds > 0L) {
                 uiText(_language.value, "Perekaman dimulai menggunakan kredit rekam", "Recording started using recording credits")
             } else {
-                uiText(_language.value, "Perekaman gratis dimulai (maksimal 2 menit)", "Free recording started (2-minute limit)")
+                uiText(_language.value, "Perekaman gratis dimulai (maksimal 20 menit)", "Free recording started (20-minute limit)")
             }
         }
     }
