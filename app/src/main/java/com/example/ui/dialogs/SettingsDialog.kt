@@ -260,183 +260,105 @@ fun SettingsDialog(
                 }
 
                 if (selectedSection == "recording") {
-                // Section 2: Video & Manual Record
-                SettingsSectionHeader(uiText(language, "PENGATURAN REKAMAN", "RECORDING SETTINGS"), Icons.Default.Videocam)
-                SettingsCard {
-                    Text(
-                        text = uiText(language, "Resolusi Video", "Video Resolution"),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HudWhite
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    VideoResolution.values().forEach { res ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSettingsChange(settings.copy(resolution = res)) }
-                                .padding(vertical = 4.dp)
-                        ) {
-                            RadioButton(
-                                selected = settings.resolution == res,
-                                onClick = { onSettingsChange(settings.copy(resolution = res)) },
-                                colors = RadioButtonDefaults.colors(
-                                    selectedColor = NeonGreen,
-                                    unselectedColor = HudMuted
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = res.label,
-                                fontSize = 12.sp,
-                                color = if (settings.resolution == res) HudWhite else HudMuted
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Frame rate
-                    Text(
-                        text = uiText(language, "Frame Rate Target", "Target Frame Rate"),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HudWhite
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(top = 6.dp)
-                    ) {
-                        listOf(60, 30).forEach { fps ->
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        if (settings.targetFps == fps) NeonGreen else CockpitBlack,
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
-                                    .clickable { onSettingsChange(settings.copy(targetFps = fps)) }
-                                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    SettingsSectionHeader(uiText(language, "PENGATURAN REKAMAN", "RECORDING SETTINGS"), Icons.Default.Videocam)
+                    SettingsCard {
+                        Text(uiText(language, "Resolusi Video", "Video Resolution"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        VideoResolution.values().forEach { res ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().clickable { onSettingsChange(settings.copy(resolution = res)) }.padding(vertical = 4.dp)
                             ) {
-                                Text(
-                                    text = "$fps FPS",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (settings.targetFps == fps) Color.Black else HudWhite
+                                RadioButton(
+                                    selected = settings.resolution == res,
+                                    onClick = { onSettingsChange(settings.copy(resolution = res)) },
+                                    colors = RadioButtonDefaults.colors(selectedColor = NeonGreen, unselectedColor = HudMuted)
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = res.label, fontSize = 12.sp, color = if (settings.resolution == res) HudWhite else HudMuted)
                             }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = uiText(language, "Satuan Kecepatan", "Speed Unit"),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HudWhite
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(top = 6.dp)
-                    ) {
-                        SpeedUnit.values().forEach { unit ->
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        if (settings.speedUnit == unit) NeonGreen else CockpitBlack,
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
-                                    .clickable { onSettingsChange(settings.copy(speedUnit = unit)) }
-                                    .padding(horizontal = 18.dp, vertical = 8.dp)
-                                    .testTag("speed_unit_${unit.name.lowercase()}")
-                            ) {
-                                Text(
-                                    text = unit.label.uppercase(),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (settings.speedUnit == unit) Color.Black else HudWhite
-                                )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(uiText(language, "Frame Rate Target", "Target Frame Rate"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                            listOf(60, 30).forEach { fps ->
+                                Box(
+                                    modifier = Modifier.background(if (settings.targetFps == fps) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
+                                        .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
+                                        .clickable { onSettingsChange(settings.copy(targetFps = fps)) }
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                ) {
+                                    Text("$fps FPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (settings.targetFps == fps) Color.Black else HudWhite)
+                                }
                             }
                         }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(uiText(language, "Satuan Kecepatan", "Speed Unit"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HudWhite)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 6.dp)) {
+                            SpeedUnit.values().forEach { unit ->
+                                Box(
+                                    modifier = Modifier.background(if (settings.speedUnit == unit) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
+                                        .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
+                                        .clickable { onSettingsChange(settings.copy(speedUnit = unit)) }
+                                        .padding(horizontal = 18.dp, vertical = 8.dp)
+                                        .testTag("speed_unit_${unit.name.lowercase()}")
+                                ) {
+                                    Text(unit.label.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (settings.speedUnit == unit) Color.Black else HudWhite)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(uiText(language, "Lokasi Penyimpanan Video:", "Video Storage Location:"), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = HudMuted)
+                        Text("0://Movies/Camriderpro/ (Internal Storage)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NeonCyan, fontFamily = FontFamily.Monospace)
                     }
-
-                    Spacer(modifier = Modifier.height(14.dp))
                 }
 
                 if (selectedSection == "voice") {
                     SettingsSectionHeader(uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"), Icons.Default.Settings)
                     SettingsCard {
-                    Text(
-                        text = uiText(language, "VOICE ASSISTANT", "VOICE ASSISTANT"),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NeonGreen
-                    )
-                    OverlayToggleItem(uiText(language, "Asisten Suara", "Voice Assistant"), settings.voiceAssistantEnabled) {
-                        onSettingsChange(settings.copy(voiceAssistantEnabled = it))
-                    }
-                    OverlayToggleItem(uiText(language, "Peringatan Suara Batas Kecepatan", "Speed Limit Voice Alert"), settings.speedLimitAlertEnabled) {
-                        onSettingsChange(settings.copy(speedLimitAlertEnabled = it))
-                    }
-                    OverlayToggleItem(uiText(language, "Suara Sambutan saat Mulai Rekam", "Welcome Voice on Recording Start"), settings.welcomeVoiceEnabled) {
-                        onSettingsChange(settings.copy(welcomeVoiceEnabled = it))
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(uiText(language, "Batas Kecepatan", "Speed Limit"), fontSize = 12.sp, color = HudWhite)
-                        Text("${settings.speedLimitKmh} km/h", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NeonGreen)
-                    }
-                    Slider(
-                        value = settings.speedLimitKmh.toFloat(),
-                        onValueChange = { onSettingsChange(settings.copy(speedLimitKmh = it.toInt())) },
-                        valueRange = 30f..160f,
-                        steps = 25,
-                        enabled = settings.voiceAssistantEnabled && settings.speedLimitAlertEnabled,
-                        colors = SliderDefaults.colors(thumbColor = NeonGreen, activeTrackColor = NeonGreen)
-                    )
-                    Text(
-                        text = uiText(language, "Jeda pengulangan peringatan: ${settings.alertRepeatSeconds} detik", "Alert repeat interval: ${settings.alertRepeatSeconds} seconds"),
-                        fontSize = 10.sp,
-                        color = HudMuted
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(15, 30, 60).forEach { seconds ->
-                            Box(
-                                modifier = Modifier
-                                    .background(if (settings.alertRepeatSeconds == seconds) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
-                                    .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
-                                    .clickable { onSettingsChange(settings.copy(alertRepeatSeconds = seconds)) }
-                                    .padding(horizontal = 12.dp, vertical = 7.dp)
-                            ) {
-                                Text("${seconds}s", fontSize = 11.sp, color = if (settings.alertRepeatSeconds == seconds) Color.Black else HudWhite)
+                        Text(uiText(language, "Pengaturan Asisten Suara", "Voice Assistant Settings"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NeonGreen)
+                        Text(
+                            uiText(language, "Aktifkan asisten suara untuk mendengar informasi perjalanan dan peringatan batas kecepatan.", "Enable voice guidance for ride information and speed limit alerts."),
+                            fontSize = 11.sp, color = HudMuted
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OverlayToggleItem(uiText(language, "Asisten Suara", "Voice Assistant"), settings.voiceAssistantEnabled) {
+                            onSettingsChange(settings.copy(voiceAssistantEnabled = it))
+                        }
+                        OverlayToggleItem(uiText(language, "Peringatan Suara Batas Kecepatan", "Speed Limit Voice Alert"), settings.speedLimitAlertEnabled) {
+                            onSettingsChange(settings.copy(speedLimitAlertEnabled = it))
+                        }
+                        OverlayToggleItem(uiText(language, "Suara Sambutan saat Mulai Rekam", "Welcome Voice on Recording Start"), settings.welcomeVoiceEnabled) {
+                            onSettingsChange(settings.copy(welcomeVoiceEnabled = it))
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(uiText(language, "Batas Kecepatan", "Speed Limit"), fontSize = 12.sp, color = HudWhite)
+                            Text("${settings.speedLimitKmh} km/h", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = NeonGreen)
+                        }
+                        Slider(
+                            value = settings.speedLimitKmh.toFloat(),
+                            onValueChange = { onSettingsChange(settings.copy(speedLimitKmh = it.toInt())) },
+                            valueRange = 30f..160f, steps = 25,
+                            enabled = settings.voiceAssistantEnabled && settings.speedLimitAlertEnabled,
+                            colors = SliderDefaults.colors(thumbColor = NeonGreen, activeTrackColor = NeonGreen)
+                        )
+                        Text(
+                            uiText(language, "Jeda pengulangan peringatan: ${settings.alertRepeatSeconds} detik", "Alert repeat interval: ${settings.alertRepeatSeconds} seconds"),
+                            fontSize = 10.sp, color = HudMuted
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(15, 30, 60).forEach { seconds ->
+                                Box(
+                                    modifier = Modifier.background(if (settings.alertRepeatSeconds == seconds) NeonGreen else CockpitBlack, RoundedCornerShape(8.dp))
+                                        .border(1.dp, CockpitBorder, RoundedCornerShape(8.dp))
+                                        .clickable { onSettingsChange(settings.copy(alertRepeatSeconds = seconds)) }
+                                        .padding(horizontal = 12.dp, vertical = 7.dp)
+                                ) {
+                                    Text("${seconds}s", fontSize = 11.sp, color = if (settings.alertRepeatSeconds == seconds) Color.Black else HudWhite)
+                                }
                             }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = uiText(language, "Lokasi Penyimpanan Video:", "Video Storage Location:"),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HudMuted
-                    )
-                    Text(
-                        text = "0://Movies/Camriderpro/ (Internal Storage)",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NeonCyan,
-                        fontFamily = FontFamily.Monospace
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
                     }
                 }
 
