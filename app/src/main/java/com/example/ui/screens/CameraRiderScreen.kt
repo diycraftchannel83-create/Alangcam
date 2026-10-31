@@ -368,6 +368,23 @@ fun CameraRiderScreen(
                 }
             }
 
+            // Place the free-user watermark directly below the speedometer, not under the control panel.
+            if (!billingState.isPremium && overlayConfig.showSpeedometer) {
+                val watermarkWidth = if (isLandscape) 88.dp else 104.dp
+                val watermarkX = ((maxWidth * overlayConfig.speedometerXRatio) - watermarkWidth / 2)
+                    .coerceIn(8.dp, (maxWidth - watermarkWidth - 8.dp).coerceAtLeast(8.dp))
+                val watermarkY = ((maxHeight * overlayConfig.speedometerYRatio) + gaugeHalf + 68.dp)
+                    .coerceAtMost((maxHeight - 34.dp).coerceAtLeast(8.dp))
+                Image(
+                    painter = painterResource(id = com.example.R.drawable.watermark_camrider),
+                    contentDescription = "CamRiderPro watermark",
+                    alpha = 0.82f,
+                    modifier = Modifier
+                        .offset(x = watermarkX, y = watermarkY)
+                        .width(watermarkWidth)
+                )
+            }
+
             // Floating Notification Toast/Banner
             AnimatedVisibility(
                 visible = bannerMessage != null,
@@ -401,19 +418,6 @@ fun CameraRiderScreen(
                     }
                 }
             }
-        }
-
-        // Creator watermark is visible in the preview for non-Premium users.
-        if (!billingState.isPremium) {
-            Image(
-                painter = painterResource(id = com.example.R.drawable.watermark_camrider),
-                contentDescription = "CamRiderPro watermark",
-                alpha = 0.82f,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .width(if (isLandscape) 112.dp else 132.dp)
-                    .padding(end = 14.dp, bottom = if (isLandscape) 12.dp else 18.dp)
-            )
         }
 
         // LAYER 3 — ControlLayer: slides smoothly out to the right when screen is tapped
