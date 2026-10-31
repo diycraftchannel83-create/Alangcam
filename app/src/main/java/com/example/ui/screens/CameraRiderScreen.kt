@@ -274,6 +274,7 @@ fun CameraRiderScreen(
                 settings = settings,
                 telemetry = telemetry,
                 isNightBoostActive = isNightBoostActive,
+                language = language,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 12.dp)
@@ -344,7 +345,7 @@ fun CameraRiderScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "GESER SPEDOMETER • KETUK KUNCI",
+                                text = uiText(language, "GESER SPEDOMETER • KETUK UNTUK KUNCI", "DRAG SPEEDOMETER • TAP TO LOCK"),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = NeonAmber
@@ -566,8 +567,8 @@ fun CameraRiderScreen(
         if (showExitConfirmation) {
             AlertDialog(
                 onDismissRequest = { showExitConfirmation = false },
-                title = { Text("Keluar dari CamRiderPro?") },
-                text = { Text("Perekaman masih berjalan. Hentikan dan simpan rekaman sebelum keluar?") },
+                title = { Text(uiText(language, "Keluar dari CamRiderPro?", "Exit CamRiderPro?")) },
+                text = { Text(uiText(language, "Perekaman masih berjalan. Hentikan dan simpan rekaman sebelum keluar?", "Recording is still in progress. Stop and save before exiting?")) },
                 confirmButton = {
                     TextButton(onClick = {
                         showExitConfirmation = false
@@ -578,12 +579,12 @@ fun CameraRiderScreen(
                             (context as? Activity)?.finishAffinity()
                         }
                     }) {
-                        Text("HENTIKAN & KELUAR", color = NeonRed)
+                        Text(uiText(language, "HENTIKAN & KELUAR", "STOP & EXIT"), color = NeonRed)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showExitConfirmation = false }) {
-                        Text("BATAL", color = HudWhite)
+                        Text(uiText(language, "BATAL", "CANCEL"), color = HudWhite)
                     }
                 },
                 containerColor = CockpitSurface,
