@@ -398,13 +398,13 @@ class CameraRecordingManager(private val context: Context) {
         ) {
             val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 this.color = color
-                textSize = size * scale * 2f
+                textSize = size * scale
                 textAlign = align
                 typeface = Typeface.create(Typeface.MONOSPACE, if (bold) Typeface.BOLD else Typeface.NORMAL)
                 if (bold) setShadowLayer(4f * scale, 0f, 0f, color)
             }
             value.split("\n").forEachIndexed { index, line ->
-                canvas.drawText(line, x, y + index * size * 2.40f * scale, p)
+                canvas.drawText(line, x, y + index * size * 1.20f * scale, p)
             }
         }
 
