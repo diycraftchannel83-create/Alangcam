@@ -487,7 +487,18 @@ class CameraRecordingManager(private val context: Context) {
             Triple(if (language == "en") "COORDINATES" else "KOORDINAT", coordFormatted, ""),
             Triple(if (language == "en") "ALTITUDE" else "ELEVASI", altFormatted, if (telemetry.isGpsFixed) "FIX" else "--"),
             Triple(if (language == "en") "DISTANCE" else "JARAK", distFormatted, ""),
-            Triple("TOP SPEED", maxFormatted, ""),
+            Triple(when (language) {
+                "id" -> "KECEPATAN MAKS"
+                "ms" -> "KELAJUAN MAKS"
+                "ja" -> "最高速度"
+                "ru" -> "МАКС. СКОРОСТЬ"
+                "th" -> "ความเร็วสูงสุด"
+                "vi" -> "TỐC ĐỘ TỐI ĐA"
+                "zh" -> "最高速度"
+                "ko" -> "최고 속도"
+                "ar" -> "السرعة القصوى"
+                else -> "MAX SPEED"
+            }, maxFormatted, ""),
             Triple(if (language == "en") "AVERAGE" else "RATA-RATA", avgFormatted, "")
         )
 
