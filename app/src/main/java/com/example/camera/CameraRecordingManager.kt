@@ -452,17 +452,13 @@ class CameraRecordingManager(private val context: Context) {
             Paint(Paint.ANTI_ALIAS_FLAG).apply { color = batteryColor })
         drawText("$batteryPercent%", bx + 38f * scale, gpsPanelTop + 24f * scale, 21f, batteryColor, true)
 
-        // Video resolution / frame-rate indicator directly beneath GPS + battery.
-        val techHeight = 48f * scale
-        val techTop = gpsPanelTop + 40f * scale
-        drawText(videoProfileLabelProvider?.invoke() ?: "1080p 60FPS H.265",
-            margin, techTop + 30f * scale, 23f, white, true)
+        // Resolution/FPS indicator intentionally omitted from the recorded HUD.
 
         // Compass HUD intentionally omitted from recorded video.
 
-        // Telemetry dock remains on the left, below the GPS/video-profile stack.
+        // Telemetry dock remains on the left, directly below the GPS/battery row.
         // LAYER 3: Left Side - Vertical Telemetry Dock (Narrowed compact layout)
-        val telemTop = techTop + techHeight + 12f * scale
+        val telemTop = gpsPanelTop + 52f * scale
         val telemWidth = 270f * scale
         val telemHeight = 500f * scale
         val telemRect = RectF(margin, telemTop, margin + telemWidth, telemTop + telemHeight)
