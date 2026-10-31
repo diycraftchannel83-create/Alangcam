@@ -85,9 +85,9 @@ fun MonetizationDialog(
                 Text("PREMIUM LIFETIME", color = HudWhite, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 Text(
                     text = if (state.isPremium) {
-                        if (isId) "Aktif — watermark dihapus permanen. Batas durasi tetap berlaku." else "Active — watermark permanently removed. Recording limits still apply."
+                        uiText(language, "Aktif — watermark dihapus permanen. Batas durasi tetap berlaku.", "Active — watermark permanently removed. Recording limits still apply.")
                     } else {
-                        if (isId) "Hapus watermark Created by CamRiderPro secara permanen. Tidak membuka durasi tanpa batas." else "Permanently remove the Created by CamRiderPro watermark. Does not unlock unlimited recording."
+                        uiText(language, "Hapus watermark Created by CamRiderPro secara permanen. Tidak membuka durasi tanpa batas.", "Permanently remove the Created by CamRiderPro watermark. Does not unlock unlimited recording.")
                     },
                     color = HudMuted,
                     fontSize = 11.sp
@@ -101,9 +101,9 @@ fun MonetizationDialog(
                 ) {
                     Text(
                         text = if (state.isPremium) {
-                            if (isId) "PREMIUM AKTIF" else "PREMIUM ACTIVE"
+                            uiText(language, "PREMIUM AKTIF", "PREMIUM ACTIVE")
                         } else {
-                            "${if (isId) "BELI PREMIUM" else "BUY PREMIUM"} • ${state.premiumPrice}"
+                            "${uiText(language, "BELI PREMIUM", "BUY PREMIUM")} • ${state.premiumPrice}"
                         },
                         fontWeight = FontWeight.Bold
                     )
@@ -120,7 +120,7 @@ fun MonetizationDialog(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isId) "Tambahkan 240 menit waktu rekam. Kredit dapat ditumpuk dan dipakai sampai habis. Watermark tetap ada jika belum membeli Premium." else "Add 240 minutes of recording time. Credits accumulate and remain until used. Watermark stays unless Premium is purchased.",
+                    text = uiText(language, "Tambahkan 240 menit waktu rekam. Kredit dapat ditumpuk dan dipakai sampai habis. Watermark tetap ada jika belum membeli Premium.", "Add 240 minutes of recording time. Credits accumulate and remain until used. Watermark stays unless Premium is purchased."),
                     color = HudMuted,
                     fontSize = 11.sp
                 )
@@ -132,7 +132,7 @@ fun MonetizationDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = NeonYellow, contentColor = Color.Black)
                 ) {
                     Text(
-                        text = "${if (isId) "TOP UP 4 JAM" else "TOP UP 4 HOURS"} • ${state.creditPrice}",
+                        text = "${uiText(language, "TOP UP 4 JAM", "TOP UP 4 HOURS")} • ${state.creditPrice}",
                         fontWeight = FontWeight.Bold
                     )
                 }
