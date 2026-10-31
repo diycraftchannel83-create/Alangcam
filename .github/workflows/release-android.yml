@@ -12,21 +12,25 @@ permissions:
   contents: write
 
 concurrency:
-  group: alangcam-release-${{ github.ref }}
+  group: alangcam-release
   cancel-in-progress: false
 
 jobs:
   build-release:
-    name: Build signed APK and AAB with diagnostics
+    name: Build signed APK and AAB
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
-      - name: Checkout source
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
 
       - name: Increment Android release version
         id: bump
@@ -37,65 +41,60 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import os
+          import re
           import subprocess
           from pathlib import Path
 
-          gradle_file = Path("app/build.gradle.kts")
-          lines = gradle_file.read_text().splitlines()
-          code_index = next((i for i, line in enumerate(lines) if line.strip().startswith("versionCode")), None)
-          name_index = next((i for i, line in enumerate(lines) if line.strip().startswith("versionName")), None)
-          if code_index is None or name_index is None:
-              raise SystemExit("Could not find versionCode/versionName in app/build.gradle.kts")
+          path = Path("app/build.gradle.kts")
+          text = path.read_text()
+          code_match = re.search(r"(?m)^\\s*versionCode\\s*=\\s*(\\d+)\\s*$", text)
+          name_match = re.search(r'(?m)^\\s*versionName\\s*=\\s*"([^"]+)"\\s*$', text)
+          if not code_match or not name_match:
+              raise SystemExit("versionCode/versionName not found in app/build.gradle.kts")
 
-          current_code = int(lines[code_index].split("=", 1)[1].strip())
-          current_name = lines[name_index].split('"')[1]
+          current_code = int(code_match.group(1))
+          current_name = name_match.group(1)
 
           def parse_version(value):
-              value = value.strip().removeprefix("v")
-              parts = value.split(".")
-              if len(parts) != 3 or not all(part.isdigit() for part in parts):
-                  return None
-              return tuple(int(part) for part in parts)
+              match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)", value.strip())
+              return tuple(map(int, match.groups())) if match else None
 
-          known_versions = []
+          versions = []
           for tag in subprocess.check_output(["git", "tag", "--list"], text=True).splitlines():
               parsed = parse_version(tag)
               if parsed:
-                  known_versions.append(parsed)
+                  versions.append(parsed)
           parsed_current = parse_version(current_name)
           if parsed_current:
-              known_versions.append(parsed_current)
-          latest = max(known_versions, default=(1, 0, 0))
+              versions.append(parsed_current)
+          latest = max(versions, default=(1, 0, 0))
 
           requested = os.environ.get("REQUESTED_VERSION", "").strip()
           if requested:
               next_version = parse_version(requested)
               if not next_version:
-                  raise SystemExit("release_tag must be in X.Y.Z format, e.g. 1.0.5")
+                  raise SystemExit("Use version format X.Y.Z, e.g. 1.0.5")
               if next_version <= latest:
-                  latest_text = ".".join(str(part) for part in latest)
-                  raise SystemExit(f"Requested version must be newer than {latest_text}")
+                  raise SystemExit("Requested version must be newer than " + ".".join(map(str, latest)))
           else:
               next_version = (latest[0], latest[1], latest[2] + 1)
 
+          version_name = ".".join(map(str, next_version))
           next_code = current_code + 1
-          indent_code = lines[code_index][:len(lines[code_index]) - len(lines[code_index].lstrip())]
-          indent_name = lines[name_index][:len(lines[name_index]) - len(lines[name_index].lstrip())]
-          version_name = ".".join(str(part) for part in next_version)
-          lines[code_index] = indent_code + "versionCode = " + str(next_code)
-          lines[name_index] = indent_name + 'versionName = "' + version_name + '"'
-          gradle_file.write_text("\n".join(lines) + "\n")
+          text = re.sub(r"(?m)^(\\s*versionCode\\s*=\\s*)\\d+\\s*$", rf"\\g<1>{next_code}", text, count=1)
+          text = re.sub(r'(?m)^(\\s*versionName\\s*=\\s*")[^"]+(".*)$', rf"\\g<1>{version_name}\\g<2>", text, count=1)
+          path.write_text(text)
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write("version_code=" + str(next_code) + "\n")
-              output.write("version_name=" + version_name + "\n")
-          print("Release version: " + version_name + " (versionCode " + str(next_code) + ")")
+              output.write(f"version_code={next_code}\\n")
+              output.write(f"version_name={version_name}\\n")
+          print(f"Building {version_name}, versionCode {next_code}")
           PY
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/build.gradle.kts
-          git commit -m "chore(release): bump Android version"
+          git commit -m "chore(release): bump to ${{ steps.bump.outputs.version_name }}"
           git push origin HEAD:main
 
       - name: Set up JDK 17
@@ -104,7 +103,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Validate signing secrets
+      - name: Validate release signing secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -115,7 +114,7 @@ jobs:
           set -euo pipefail
           for name in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
             if [[ -z "${!name}" ]]; then
-              echo "::error::Missing required GitHub Actions secret: $name"
+              echo "::error::Missing GitHub secret: $name"
               exit 1
             fi
           done
@@ -123,7 +122,6 @@ jobs:
       - name: Decode release keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        shell: bash
         run: |
           set -euo pipefail
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/camriderpro-release.jks"
@@ -131,12 +129,11 @@ jobs:
           chmod 600 "$RUNNER_TEMP/camriderpro-release.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/camriderpro-release.jks" >> "$GITHUB_ENV"
 
-      - name: Verify keystore credentials
+      - name: Verify keystore
         env:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
+        run: keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
 
       - name: Generate launcher icons
         run: |
@@ -156,11 +153,9 @@ jobs:
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
+        run: gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
 
-      - name: Collect APK, AAB, and diagnostic files
+      - name: Collect APK, AAB, and diagnostics
         shell: bash
         run: |
           set -euo pipefail
@@ -168,28 +163,17 @@ jobs:
           shopt -s nullglob
           apks=(app/build/outputs/apk/release/*.apk)
           aabs=(app/build/outputs/bundle/release/*.aab)
-          mapping_file="app/build/outputs/mapping/release/mapping.txt"
-          native_symbols_file="app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip"
-          (( ${#apks[@]} > 0 )) || { echo "::error::Release APK was not generated"; exit 1; }
-          (( ${#aabs[@]} > 0 )) || { echo "::error::Release AAB was not generated"; exit 1; }
+          mapping="app/build/outputs/mapping/release/mapping.txt"
+          symbols="app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip"
+          (( ${#apks[@]} > 0 )) || { echo "::error::Release APK missing"; exit 1; }
+          (( ${#aabs[@]} > 0 )) || { echo "::error::Release AAB missing"; exit 1; }
           cp -- "${apks[0]}" release-output/CamRiderPro-release.apk
           cp -- "${aabs[0]}" release-output/CamRiderPro-release.aab
-          if [[ -s "$mapping_file" ]]; then
-            cp -- "$mapping_file" release-output/mapping.txt
-          else
-            echo "::warning::R8 mapping.txt was not generated."
-          fi
-          # Native symbols are optional: AGP may not emit a standalone ZIP.
-          # Never let a missing optional file fail an otherwise successful APK/AAB build.
-          if [[ -s "$native_symbols_file" ]]; then
-            cp -- "$native_symbols_file" release-output/native-debug-symbols.zip
-            echo "Native debug symbols included."
-          else
-            echo "::notice::No standalone native-debug-symbols.zip was generated; continuing without it."
-          fi
+          [[ ! -s "$mapping" ]] || cp -- "$mapping" release-output/mapping.txt
+          [[ ! -s "$symbols" ]] || cp -- "$symbols" release-output/native-debug-symbols.zip
           ls -lh release-output
 
-      - name: Upload build artifacts
+      - name: Upload signed APK and AAB
         uses: actions/upload-artifact@v4
         with:
           name: CamRiderPro-release-${{ steps.bump.outputs.version_name }}
@@ -198,277 +182,10 @@ jobs:
           retention-days: 90
 
       - name: Publish GitHub Release
-        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.bump.outputs.version_name }}
           target_commitish: main
           name: CamRiderPro ${{ steps.bump.outputs.version_name }}
           generate_release_notes: true
-          files: |
-            release-output/*
-, text)
-          if not code_match or not name_match:
-              raise SystemExit("Could not find versionCode/versionName in app/build.gradle.kts")
-
-          current_code = int(code_match.group(1))
-          current_name = name_match.group(1)
-          tag_versions = []
-          for tag in subprocess.check_output(["git", "tag", "--list"], text=True).splitlines():
-              match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)", tag.strip())
-              if match:
-                  tag_versions.append(tuple(map(int, match.groups())))
-          current_match = re.fullmatch(r"v?(\\d+)\\.(\\d+)\\.(\\d+)", current_name)
-          if current_match:
-              tag_versions.append(tuple(map(int, current_match.groups())))
-          latest = max(tag_versions, default=(1, 0, 0))
-
-          requested = os.environ.get("REQUESTED_VERSION", "").strip()
-          if requested:
-              requested = requested.removeprefix("v")
-              match = re.fullmatch(r"(\\d+)\\.(\\d+)\\.(\\d+)", requested)
-              if not match:
-                  raise SystemExit("release_tag must use semantic version format, e.g. 1.0.5")
-              next_version = tuple(map(int, match.groups()))
-              if next_version <= latest:
-                  raise SystemExit(f"Requested version {requested} must be newer than latest release {'.'.join(map(str, latest))}")
-          else:
-              next_version = (latest[0], latest[1], latest[2] + 1)
-
-          next_code = current_code + 1
-          updated = re.sub(r"(?m)^(\\s*versionCode\\s*=\\s*)\\d+(\\s*)$", rf"\\g<1>{next_code}\\g<2>", text, count=1)
-          updated = re.sub(r'(?m)^(\\s*versionName\\s*=\\s*")[^"]+(".*)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Validate signing secrets
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for name in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [[ -z "${!name}" ]]; then
-              echo "::error::Missing required GitHub Actions secret: $name"
-              exit 1
-            fi
-          done
-
-      - name: Decode release keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/camriderpro-release.jks"
-          test -s "$RUNNER_TEMP/camriderpro-release.jks"
-          chmod 600 "$RUNNER_TEMP/camriderpro-release.jks"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/camriderpro-release.jks" >> "$GITHUB_ENV"
-
-      - name: Verify keystore credentials
-        env:
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
-
-      - name: Generate launcher icons
-        run: |
-          python3 -m pip install Pillow
-          python3 scripts/generate_launcher_icons.py
-          test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
-          test -s app/src/main/res/mipmap-mdpi/ic_launcher.png
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.3.1"
-
-      - name: Build signed release APK and AAB
-        env:
-          KEYSTORE_PATH: ${{ runner.temp }}/camriderpro-release.jks
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
-
-      - name: Collect APK, AAB, and diagnostic files
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release-output
-          shopt -s nullglob
-          apks=(app/build/outputs/apk/release/*.apk)
-          aabs=(app/build/outputs/bundle/release/*.aab)
-          mapping_file="app/build/outputs/mapping/release/mapping.txt"
-          native_symbols_file="app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip"
-          (( ${#apks[@]} > 0 )) || { echo "::error::Release APK was not generated"; exit 1; }
-          (( ${#aabs[@]} > 0 )) || { echo "::error::Release AAB was not generated"; exit 1; }
-          cp -- "${apks[0]}" release-output/CamRiderPro-release.apk
-          cp -- "${aabs[0]}" release-output/CamRiderPro-release.aab
-          if [[ -s "$mapping_file" ]]; then
-            cp -- "$mapping_file" release-output/mapping.txt
-          else
-            echo "::warning::R8 mapping.txt was not generated."
-          fi
-          # Native symbols are optional: AGP may not emit a standalone ZIP.
-          # Never let a missing optional file fail an otherwise successful APK/AAB build.
-          if [[ -s "$native_symbols_file" ]]; then
-            cp -- "$native_symbols_file" release-output/native-debug-symbols.zip
-            echo "Native debug symbols included."
-          else
-            echo "::notice::No standalone native-debug-symbols.zip was generated; continuing without it."
-          fi
-          ls -lh release-output
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: CamRiderPro-release-v1.0.2
-          path: release-output/*
-          if-no-files-found: error
-          retention-days: 90
-
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.release_tag || github.ref_name }}
-          target_commitish: main
-          name: CamRiderPro ${{ inputs.release_tag || github.ref_name }}
-          generate_release_notes: true
-          files: |
-            release-output/*
-, rf"\\g<1>{'.'.join(map(str, next_version))}\\g<2>", updated, count=1)
-          gradle_file.write_text(updated)
-
-          version_name = ".".join(map(str, next_version))
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"version_code={next_code}\n")
-              output.write(f"version_name={version_name}\n")
-          print(f"Release version: {version_name} (versionCode {next_code})")
-          PY
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle.kts
-          git commit -m "chore(release): bump to ${{ steps.bump.outputs.version_name }} (versionCode ${{ steps.bump.outputs.version_code }})"
-          git push origin HEAD:main
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Validate signing secrets
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for name in KEYSTORE_BASE64 STORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
-            if [[ -z "${!name}" ]]; then
-              echo "::error::Missing required GitHub Actions secret: $name"
-              exit 1
-            fi
-          done
-
-      - name: Decode release keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/camriderpro-release.jks"
-          test -s "$RUNNER_TEMP/camriderpro-release.jks"
-          chmod 600 "$RUNNER_TEMP/camriderpro-release.jks"
-          echo "KEYSTORE_PATH=$RUNNER_TEMP/camriderpro-release.jks" >> "$GITHUB_ENV"
-
-      - name: Verify keystore credentials
-        env:
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS"
-
-      - name: Generate launcher icons
-        run: |
-          python3 -m pip install Pillow
-          python3 scripts/generate_launcher_icons.py
-          test -s app/src/main/res/drawable-nodpi/ic_launcher_art.png
-          test -s app/src/main/res/mipmap-mdpi/ic_launcher.png
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "9.3.1"
-
-      - name: Build signed release APK and AAB
-        env:
-          KEYSTORE_PATH: ${{ runner.temp }}/camriderpro-release.jks
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          gradle --no-daemon --no-configuration-cache --stacktrace :app:assembleRelease :app:bundleRelease
-
-      - name: Collect APK, AAB, and diagnostic files
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p release-output
-          shopt -s nullglob
-          apks=(app/build/outputs/apk/release/*.apk)
-          aabs=(app/build/outputs/bundle/release/*.aab)
-          mapping_file="app/build/outputs/mapping/release/mapping.txt"
-          native_symbols_file="app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip"
-          (( ${#apks[@]} > 0 )) || { echo "::error::Release APK was not generated"; exit 1; }
-          (( ${#aabs[@]} > 0 )) || { echo "::error::Release AAB was not generated"; exit 1; }
-          cp -- "${apks[0]}" release-output/CamRiderPro-release.apk
-          cp -- "${aabs[0]}" release-output/CamRiderPro-release.aab
-          if [[ -s "$mapping_file" ]]; then
-            cp -- "$mapping_file" release-output/mapping.txt
-          else
-            echo "::warning::R8 mapping.txt was not generated."
-          fi
-          # Native symbols are optional: AGP may not emit a standalone ZIP.
-          # Never let a missing optional file fail an otherwise successful APK/AAB build.
-          if [[ -s "$native_symbols_file" ]]; then
-            cp -- "$native_symbols_file" release-output/native-debug-symbols.zip
-            echo "Native debug symbols included."
-          else
-            echo "::notice::No standalone native-debug-symbols.zip was generated; continuing without it."
-          fi
-          ls -lh release-output
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: CamRiderPro-release-v1.0.2
-          path: release-output/*
-          if-no-files-found: error
-          retention-days: 90
-
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.release_tag || github.ref_name }}
-          target_commitish: main
-          name: CamRiderPro ${{ inputs.release_tag || github.ref_name }}
-          generate_release_notes: true
-          files: |
-            release-output/*
+          files: release-output/*
