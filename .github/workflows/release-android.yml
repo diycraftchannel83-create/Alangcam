@@ -133,7 +133,4 @@ jobs:
           name: CamRiderPro ${{ inputs.release_tag || github.ref_name }}
           generate_release_notes: true
           files: |
-            release-output/CamRiderPro-release.apk
-            release-output/CamRiderPro-release.aab
-            release-output/mapping.txt
-            release-output/native-debug-symbols.zip
+            release-output/*
