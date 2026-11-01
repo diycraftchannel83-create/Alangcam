@@ -25,7 +25,7 @@ const CONFIG = Object.freeze({
 
 const HEADERS = {
   wallets: ["uid", "creditSeconds", "totalPurchasedSeconds", "totalUsedSeconds", "premiumOwned", "updatedAt"],
-  purchases: ["tokenHash", "uid", "productId", "credits", "seconds", "purchaseTime", "createdAt"],
+  purchases: ["tokenHash", "uid", "productId", "credits", "seconds", "purchaseTime", "createdAt", "status", "balanceAfter", "totalPurchasedAfter"],
   sessions: ["sessionId", "uid", "status", "startedAt", "lastHeartbeatAt", "finishedAt", "remainingSeconds"],
   transactions: ["createdAt", "uid", "type", "productId", "credits", "creditSeconds", "sessionId", "tokenHash"]
 };
@@ -81,6 +81,9 @@ function setupDatabase() {
     if (sheet.getLastRow() === 0) {
       sheet.getRange(1, 1, 1, HEADERS[name].length).setValues([HEADERS[name]]);
       sheet.setFrozenRows(1);
+    } else if (name === "purchases" && sheet.getLastColumn() < HEADERS.purchases.length) {
+      // Safe, additive migration for existing purchase ledgers. Blank status on old rows means legacy/applied.
+      sheet.getRange(1, 1, 1, HEADERS.purchases.length).setValues([HEADERS.purchases]);
     }
   });
   return "CamRiderPro sheets are ready.";
@@ -114,34 +117,63 @@ function verifyCreditPurchase_(uid, body) {
 
   const purchase = getPlayProductPurchase_(productId, purchaseToken);
   if (Number(purchase.purchaseState) !== 0) throw new Error("Google Play purchase is not completed.");
+  if (purchase.productId && String(purchase.productId) !== productId) {
+    throw new Error("Google Play product does not match the requested product.");
+  }
+  if (purchase.packageName && String(purchase.packageName) !== CONFIG.PACKAGE_NAME) {
+    throw new Error("Google Play package does not match this application.");
+  }
+  if (purchase.purchaseType !== undefined && Number(purchase.purchaseType) === 0) {
+    // Test purchases are valid only when Google Play reports them as completed.
+  }
 
   const tokenHash = sha256_(purchaseToken);
   return withScriptLock_(function() {
     const ss = getSpreadsheet_();
     const purchases = ss.getSheetByName("purchases");
-    const existingRow = findRow_(purchases, 1, tokenHash);
-    if (existingRow) {
-      const existing = purchases.getRange(existingRow, 1, 1, HEADERS.purchases.length).getValues()[0];
-      if (String(existing[1]) !== uid || String(existing[2]) !== productId) {
+    let purchaseRow = findRow_(purchases, 1, tokenHash);
+    let record;
+
+    if (purchaseRow) {
+      record = purchases.getRange(purchaseRow, 1, 1, HEADERS.purchases.length).getValues()[0];
+      if (String(record[1]) !== uid || String(record[2]) !== productId) {
         throw new Error("Purchase token has already been used by another account.");
       }
+      // Older rows have no status column and are treated as already applied.
+      if (!record[7] || String(record[7]) === "APPLIED") {
+        const wallet = getWalletRow_(uid, true);
+        return { alreadyProcessed: true, creditSeconds: Number(wallet[1]) || 0, creditsAdded: 0 };
+      }
+      if (String(record[7]) !== "PENDING") throw new Error("Purchase ledger is in an invalid state.");
+    } else {
       const wallet = getWalletRow_(uid, true);
-      return { alreadyProcessed: true, creditSeconds: Number(wallet[1]) || 0 };
+      const balanceAfter = (Number(wallet[1]) || 0) + product.seconds;
+      const totalPurchasedAfter = (Number(wallet[2]) || 0) + product.seconds;
+      const now = new Date().toISOString();
+      purchases.appendRow([
+        tokenHash, uid, productId, product.credits, product.seconds,
+        purchase.purchaseTimeMillis || "", now, "PENDING", balanceAfter, totalPurchasedAfter
+      ]);
+      purchaseRow = purchases.getLastRow();
+      record = purchases.getRange(purchaseRow, 1, 1, HEADERS.purchases.length).getValues()[0];
     }
 
+    // Write absolute target balances, not increments: retrying a PENDING ledger row is safe
+    // if execution stopped after the wallet write but before the ledger was marked APPLIED.
     const wallet = getWalletRow_(uid, true);
-    wallet[1] = (Number(wallet[1]) || 0) + product.seconds;
-    wallet[2] = (Number(wallet[2]) || 0) + product.seconds;
+    wallet[1] = Number(record[8]);
+    wallet[2] = Number(record[9]);
     wallet[5] = new Date().toISOString();
     saveWalletRow_(uid, wallet);
-    purchases.appendRow([
-      tokenHash, uid, productId, product.credits, product.seconds,
-      purchase.purchaseTimeMillis || "", new Date().toISOString()
-    ]);
-    ss.getSheetByName("transactions").appendRow([
-      new Date().toISOString(), uid, "purchase", productId,
-      product.credits, product.seconds, "", tokenHash
-    ]);
+
+    const transactions = ss.getSheetByName("transactions");
+    if (!findTransactionByToken_(transactions, tokenHash)) {
+      transactions.appendRow([
+        new Date().toISOString(), uid, "purchase", productId,
+        product.credits, product.seconds, "", tokenHash
+      ]);
+    }
+    purchases.getRange(purchaseRow, 8).setValue("APPLIED");
     return {
       alreadyProcessed: false,
       creditsAdded: product.credits,
@@ -149,6 +181,14 @@ function verifyCreditPurchase_(uid, body) {
       creditSeconds: wallet[1]
     };
   });
+}
+
+function findTransactionByToken_(sheet, tokenHash) {
+  const last = sheet.getLastRow();
+  if (last < 2) return 0;
+  const found = sheet.getRange(2, 8, last - 1, 1)
+    .createTextFinder(String(tokenHash)).matchEntireCell(true).findNext();
+  return found ? found.getRow() : 0;
 }
 
 function verifyWatermarkPurchase_(uid, body) {
@@ -250,8 +290,7 @@ function startCreditRecording_(uid, body) {
       if (String(row[1]) !== uid || String(row[2]) !== "active") continue;
       const last = Date.parse(row[4] || row[3] || "");
       if (!last || now - last > CONFIG.MAX_HEARTBEAT_GAP_SECONDS * 1000) {
-        sessions.getRange(i + 2, 3).setValue("expired");
-        sessions.getRange(i + 2, 6).setValue(new Date(now).toISOString());
+        settleSessionInterval_(uid, row, i + 2, now);
       } else if (String(row[0]) !== sessionId) {
         throw new Error("Another recording session is already active.");
       }
@@ -266,6 +305,29 @@ function startCreditRecording_(uid, body) {
     sessions.appendRow([sessionId, uid, "active", iso, iso, "", balance]);
     return { sessionId: sessionId, remainingSeconds: balance };
   });
+}
+
+function settleSessionInterval_(uid, session, rowNumber, now) {
+  const ss = getSpreadsheet_();
+  const sessions = ss.getSheetByName("sessions");
+  const last = Date.parse(session[4] || session[3] || "");
+  const elapsed = last ? Math.max(0, Math.floor((now - last) / 1000)) : 0;
+  const wallet = getWalletRow_(uid, true);
+  const balance = Math.max(0, Number(wallet[1]) || 0);
+  const charge = Math.min(elapsed, CONFIG.MAX_CHARGE_PER_HEARTBEAT_SECONDS, balance);
+  wallet[1] = balance - charge;
+  wallet[3] = (Number(wallet[3]) || 0) + charge;
+  wallet[5] = new Date(now).toISOString();
+  saveWalletRow_(uid, wallet);
+  const iso = new Date(now).toISOString();
+  sessions.getRange(rowNumber, 3).setValue("expired");
+  sessions.getRange(rowNumber, 6).setValue(iso);
+  sessions.getRange(rowNumber, 7).setValue(wallet[1]);
+  if (charge > 0) {
+    ss.getSheetByName("transactions").appendRow([
+      iso, uid, "usage", "", 0, -charge, String(session[0]), ""
+    ]);
+  }
 }
 
 function heartbeatCreditRecording_(uid, body) {
@@ -349,13 +411,15 @@ function finishCreditRecording_(uid, body) {
 }
 
 function getCreditBalance_(uid) {
-  const wallet = getWalletRow_(uid, true);
-  return {
-    creditSeconds: Number(wallet[1]) || 0,
-    totalPurchasedSeconds: Number(wallet[2]) || 0,
-    totalUsedSeconds: Number(wallet[3]) || 0,
-    premiumOwned: wallet[4] === true || String(wallet[4]).toLowerCase() === "true"
-  };
+  return withScriptLock_(function() {
+    const wallet = getWalletRow_(uid, true);
+    return {
+      creditSeconds: Number(wallet[1]) || 0,
+      totalPurchasedSeconds: Number(wallet[2]) || 0,
+      totalUsedSeconds: Number(wallet[3]) || 0,
+      premiumOwned: wallet[4] === true || String(wallet[4]).toLowerCase() === "true"
+    };
+  });
 }
 
 function getWalletRow_(uid, createIfMissing) {
