@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: RiderCamViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onResume() {\n        super.onResume()\n        // Promo codes may be redeemed in Play Store while the app is not running.\n        viewModel.refreshPurchases()\n    }\n\n    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
