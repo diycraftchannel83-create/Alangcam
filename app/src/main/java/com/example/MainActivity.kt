@@ -16,6 +16,12 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: RiderCamViewModel by viewModels()
 
+    override fun onResume() {
+        super.onResume()
+        // Re-check Play purchases after a promo code is redeemed in Google Play.
+        viewModel.refreshPurchases()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
