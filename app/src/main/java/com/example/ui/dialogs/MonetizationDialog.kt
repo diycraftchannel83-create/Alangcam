@@ -100,6 +100,15 @@ fun MonetizationDialog(
                     color = HudMuted,
                     fontSize = 11.sp
                 )
+                Text(
+                    text = uiText(
+                        language,
+                        "Punya kode promo 1.000 Credit? Tukarkan melalui Google Play Store > Profil > Pembayaran & langganan > Tukarkan kode. Setelah berhasil, kembali ke sini dan tekan PERBARUI STATUS PEMBELIAN. Anda juga dapat memilih Redeem pada layar pembayaran Google Play.",
+                        "Have a 1,000 Credit promo code? Redeem it in Google Play Store > Profile > Payments & subscriptions > Redeem code. Then return here and tap REFRESH PURCHASE STATUS. You can also choose Redeem on the Google Play checkout screen."
+                    ),
+                    color = HudMuted,
+                    fontSize = 10.sp
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = onBuyCredit,
