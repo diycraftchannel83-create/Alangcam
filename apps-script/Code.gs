@@ -109,6 +109,35 @@ function verifyFirebaseIdToken_(idToken) {
   return String(data.users[0].localId);
 }
 
+
+function recoverPendingPurchases_(uid) {
+  const ss = getSpreadsheet_();
+  const purchases = ss.getSheetByName("purchases");
+  const last = purchases.getLastRow();
+  if (last < 2) return;
+  const rows = purchases.getRange(2, 1, last - 1, HEADERS.purchases.length).getValues();
+  const wallet = getWalletRow_(uid, true);
+  let changed = false;
+  rows.forEach(function(record, index) {
+    if (String(record[1]) !== uid || String(record[7]) !== "PENDING") return;
+    // The stored absolute target makes this recovery safe to repeat.
+    wallet[1] = Number(record[8]) || 0;
+    wallet[2] = Number(record[9]) || 0;
+    wallet[5] = new Date().toISOString();
+    changed = true;
+    const tokenHash = String(record[0]);
+    const transactions = ss.getSheetByName("transactions");
+    if (!findTransactionByToken_(transactions, tokenHash)) {
+      transactions.appendRow([
+        new Date().toISOString(), uid, "purchase", String(record[2]),
+        Number(record[3]) || 0, Number(record[4]) || 0, "", tokenHash
+      ]);
+    }
+    purchases.getRange(index + 2, 8).setValue("APPLIED");
+  });
+  if (changed) saveWalletRow_(uid, wallet);
+}
+
 function verifyCreditPurchase_(uid, body) {
   const productId = String(body.productId || "");
   const purchaseToken = String(body.purchaseToken || "");
@@ -129,6 +158,7 @@ function verifyCreditPurchase_(uid, body) {
 
   const tokenHash = sha256_(purchaseToken);
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const ss = getSpreadsheet_();
     const purchases = ss.getSheetByName("purchases");
     let purchaseRow = findRow_(purchases, 1, tokenHash);
@@ -202,6 +232,7 @@ function verifyWatermarkPurchase_(uid, body) {
 
   const tokenHash = sha256_(purchaseToken);
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const ss = getSpreadsheet_();
     const purchases = ss.getSheetByName("purchases");
     const existingRow = findRow_(purchases, 1, tokenHash);
@@ -281,6 +312,7 @@ function getPlayAccessToken_() {
 function startCreditRecording_(uid, body) {
   const sessionId = validSessionId_(body.sessionId);
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const now = Date.now();
     const ss = getSpreadsheet_();
     const sessions = ss.getSheetByName("sessions");
@@ -333,6 +365,7 @@ function settleSessionInterval_(uid, session, rowNumber, now) {
 function heartbeatCreditRecording_(uid, body) {
   const sessionId = validSessionId_(body.sessionId);
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const ss = getSpreadsheet_();
     const sessions = ss.getSheetByName("sessions");
     const rowNumber = findRow_(sessions, 1, sessionId);
@@ -376,6 +409,7 @@ function heartbeatCreditRecording_(uid, body) {
 function finishCreditRecording_(uid, body) {
   const sessionId = validSessionId_(body.sessionId);
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const ss = getSpreadsheet_();
     const sessions = ss.getSheetByName("sessions");
     const rowNumber = findRow_(sessions, 1, sessionId);
@@ -412,6 +446,7 @@ function finishCreditRecording_(uid, body) {
 
 function getCreditBalance_(uid) {
   return withScriptLock_(function() {
+    recoverPendingPurchases_(uid);
     const wallet = getWalletRow_(uid, true);
     return {
       creditSeconds: Number(wallet[1]) || 0,
