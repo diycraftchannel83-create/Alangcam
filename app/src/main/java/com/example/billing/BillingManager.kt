@@ -31,6 +31,7 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
     companion object {
         private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
         const val RECORDING_CREDIT_PRODUCT_ID = "credit_1000"
+        private const val LEGACY_RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
         const val RECORDING_CREDIT_SECONDS = 2L * 60L * 60L
         const val RECORDING_CREDIT_2H_PRODUCT_ID = "2._2000_credit"
         const val RECORDING_CREDIT_5H_PRODUCT_ID = "5._5000_credit"
@@ -108,6 +109,7 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
     private fun queryProducts() {
         val ids = listOf(
             RECORDING_CREDIT_PRODUCT_ID,
+            LEGACY_RECORDING_CREDIT_PRODUCT_ID,
             RECORDING_CREDIT_2H_PRODUCT_ID,
             RECORDING_CREDIT_5H_PRODUCT_ID
         )
