@@ -24,13 +24,13 @@ data class BillingUiState(
 )
 
 /**
- * Play Billing client. Purchases are verified and credited by the Google Apps Script backend.
+ * Play Billing client. Purchases are verified and credited by Firebase Cloud Functions.
  * The client never writes a credit balance locally.
  */
-class BillingManager(context: Context, private val creditRepository: AppsScriptCreditRepository = AppsScriptCreditRepository()) : PurchasesUpdatedListener {
+class BillingManager(context: Context, private val creditRepository: FirebaseCreditRepository = FirebaseCreditRepository()) : PurchasesUpdatedListener {
     companion object {
         private const val LEGACY_WATERMARK_PRODUCT_ID = "remove_watermark"
-        const val RECORDING_CREDIT_PRODUCT_ID = "1._1000_credit"
+        const val RECORDING_CREDIT_PRODUCT_ID = "credit_1000"
         const val RECORDING_CREDIT_SECONDS = 2L * 60L * 60L
         const val RECORDING_CREDIT_2H_PRODUCT_ID = "2._2000_credit"
         const val RECORDING_CREDIT_5H_PRODUCT_ID = "5._5000_credit"
@@ -71,7 +71,7 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Apps Script wallet initialization failed", e)
+                Log.e(TAG, "Firebase wallet initialization failed", e)
                 _state.value = _state.value.copy(
                     message = "Saldo kredit belum dapat disinkronkan. Periksa koneksi internet dan konfigurasi backend."
                 )
@@ -242,9 +242,10 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
             try {
                 // A server-verified and idempotent grant must succeed before consuming the Play token.
                 creditRepository.signInAnonymouslyIfNeeded()
-                creditRepository.verifyCreditPurchase(productId, token)
+                val verification = creditRepository.verifyCreditPurchase(productId, token)
+                val creditsAdded = (verification["creditsAdded"] as? Number)?.toInt() ?: 0
                 _state.value = _state.value.copy(
-                    message = "Pembelian berhasil diverifikasi. Kredit sedang disinkronkan ke saldo akun."
+                    message = if (creditsAdded > 0) "Berhasil! $creditsAdded Credit telah ditambahkan ke saldo." else "Transaksi sudah diproses. Saldo telah disinkronkan."
                 )
                 val consume = ConsumeParams.newBuilder().setPurchaseToken(token).build()
                 billingClient.consumeAsync(consume) { consumeResult, _ ->
