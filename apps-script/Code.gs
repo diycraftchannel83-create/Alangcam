@@ -15,7 +15,8 @@ const CONFIG = Object.freeze({
   MAX_HEARTBEAT_GAP_SECONDS: 45,
   MAX_CHARGE_PER_HEARTBEAT_SECONDS: 30,
   PRODUCTS: {
-    "1._1000_credit": { credits: 1000, seconds: 7200 },
+    "credit_1000": { credits: 1000, seconds: 7200 },
+    "1._1000_credit": { credits: 1000, seconds: 7200 }, // Legacy SKU retained for existing purchases.
     "2._2000_credit": { credits: 2000, seconds: 14400 },
     "5._5000_credit": { credits: 5000, seconds: 39600 }
   },
