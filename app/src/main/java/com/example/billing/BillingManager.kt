@@ -249,9 +249,15 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
                 creditRepository.signInAnonymouslyIfNeeded()
                 val verification = creditRepository.verifyCreditPurchase(productId, token)
                 val creditsAdded = (verification["creditsAdded"] as? Number)?.toInt() ?: 0
-                _state.value = _state.value.copy(
-                    message = if (creditsAdded > 0) "Berhasil! $creditsAdded Credit telah ditambahkan ke saldo." else "Transaksi sudah diproses. Saldo telah disinkronkan."
-                )
+                val alreadyProcessed = verification["alreadyProcessed"] == true
+                val isPromoCode = verification["isPromoCode"] == true
+                val successMessage = when {
+                    alreadyProcessed -> "Transaksi sudah pernah diproses. Saldo telah disinkronkan."
+                    isPromoCode -> "Kode promo berhasil! $creditsAdded Credit ditambahkan ke saldo."
+                    creditsAdded > 0 -> "Berhasil! $creditsAdded Credit telah ditambahkan ke saldo."
+                    else -> "Transaksi berhasil diverifikasi dan saldo disinkronkan."
+                }
+                _state.value = _state.value.copy(message = successMessage)
                 val consume = ConsumeParams.newBuilder().setPurchaseToken(token).build()
                 billingClient.consumeAsync(consume) { consumeResult, _ ->
                     if (consumeResult.responseCode != BillingClient.BillingResponseCode.OK) {
