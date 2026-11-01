@@ -515,6 +515,10 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun refreshPurchases() {
+        billingManager.refreshPurchases()
+    }
+
     fun exportVideoWithSpeedometer(session: RideSession) {
         viewModelScope.launch {
             _bannerMessage.value = uiText(_language.value, "Mengekspor video dengan overlay spedometer...", "Exporting video with speedometer overlay...")
