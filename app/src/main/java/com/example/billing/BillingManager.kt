@@ -43,6 +43,7 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
     private val prefs = appContext.getSharedPreferences("camriderpro_billing", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val processingTokens = mutableSetOf<String>()
+    private var isConnecting = false
 
     private val _state = MutableStateFlow(
         BillingUiState(isPremium = false)
@@ -85,8 +86,11 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
             queryPurchases()
             return
         }
+        if (isConnecting) return
+        isConnecting = true
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
+                isConnecting = false
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     _state.value = _state.value.copy(isConnected = true, message = null)
                     queryProducts()
@@ -100,6 +104,7 @@ class BillingManager(context: Context, private val creditRepository: FirebaseCre
             }
 
             override fun onBillingServiceDisconnected() {
+                isConnecting = false
                 _state.value = _state.value.copy(isConnected = false)
             }
         })
