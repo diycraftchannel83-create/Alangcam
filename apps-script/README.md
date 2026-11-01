@@ -5,7 +5,8 @@ This backend replaces Firebase Cloud Functions and Firestore wallet writes with 
 ## What it provides
 
 - Server-side Google Play product purchase verification for:
-  - `1._1000_credit`: 1,000 credits / 7,200 seconds
+  - `credit_1000`: 1,000 credits / 7,200 seconds (promo SKU)
+  - `1._1000_credit`: 1,000 credits / 7,200 seconds (legacy SKU)
   - `2._2000_credit`: 2,000 credits / 14,400 seconds
   - `5._5000_credit`: 5,000 credits / 39,600 seconds
 - Idempotent purchase grants keyed by a SHA-256 hash of the Play purchase token.
