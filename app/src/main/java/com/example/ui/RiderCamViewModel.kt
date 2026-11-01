@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.camera.CameraRecordingManager
 import com.example.ui.uiText
 import com.example.billing.BillingManager
-import com.example.billing.AppsScriptCreditRepository
+import com.example.billing.FirebaseCreditRepository
 import com.example.data.local.RideDatabase
 import com.example.data.local.RideEntity
 import com.example.data.model.GpsTelemetry
@@ -38,7 +38,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
 
     val gpsTracker = GpsSpeedTracker(application)
     val cameraManager = CameraRecordingManager(application)
-    private val creditRepository = AppsScriptCreditRepository()
+    private val creditRepository = FirebaseCreditRepository()
     val billingManager = BillingManager(application, creditRepository)
     val billingState: StateFlow<com.example.billing.BillingUiState> = billingManager.state
     private var creditSessionId: String? = null
@@ -232,7 +232,7 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun updateBannerForMissingAudioPermission() {
+    fun refreshPurchases() {\n        billingManager.refreshPurchases()\n    }\n\n    fun updateBannerForMissingAudioPermission() {
         _bannerMessage.value = uiText(_language.value, "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio.", "Microphone permission denied. Video will be recorded without audio.")
     }
 
