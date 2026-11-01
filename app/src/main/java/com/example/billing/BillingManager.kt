@@ -234,6 +234,7 @@ class BillingManager(context: Context, private val creditRepository: AppsScriptC
 
         val productId = purchase.products.firstOrNull { it in setOf(
             RECORDING_CREDIT_PRODUCT_ID,
+            LEGACY_RECORDING_CREDIT_PRODUCT_ID,
             RECORDING_CREDIT_2H_PRODUCT_ID,
             RECORDING_CREDIT_5H_PRODUCT_ID
         ) } ?: return
