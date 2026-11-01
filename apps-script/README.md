@@ -9,7 +9,9 @@ This backend replaces Firebase Cloud Functions and Firestore wallet writes with 
   - `1._1000_credit`: 1,000 credits / 7,200 seconds (legacy SKU)
   - `2._2000_credit`: 2,000 credits / 14,400 seconds
   - `5._5000_credit`: 5,000 credits / 39,600 seconds
-- Idempotent purchase grants keyed by a SHA-256 hash of the Play purchase token.
+- Recoverable, idempotent purchase grants keyed by a SHA-256 hash of the Play purchase token. A pending grant stores absolute target wallet totals so a retry can safely finish an interrupted write.
+- ScriptLock-protected wallet reads and writes, plus recovery of pending grants before wallet/session operations.
+- Stale recording-session settlement when a new recording starts; elapsed usage is bounded by the configured per-heartbeat charge cap.
 - Server-owned credit wallet and transaction ledger in Google Sheets.
 - Server-timestamp recording sessions with 15-second client heartbeat recommendation.
 - Permanent watermark entitlement endpoint for the legacy product ID `remove_watermark`.
@@ -28,7 +30,7 @@ Apps Script is suitable for a low-volume pilot, not a high-concurrency productio
    - `SPREADSHEET_ID`: the spreadsheet ID from step 2.
    - `FIREBASE_WEB_API_KEY`: the API key from the existing app's `google-services.json` (this is a Firebase client API key, not a private credential).
    - `PLAY_SERVICE_ACCOUNT_JSON`: the complete contents of the Google Play service-account JSON private-key file. Never put this value in GitHub, Android resources, or a spreadsheet.
-6. In the Apps Script editor, select and run `setupDatabase` once. Review and grant the requested spreadsheet/external-request permissions.
+6. In the Apps Script editor, select and run `setupDatabase` once. Review and grant the requested spreadsheet/external-request permissions. On an existing deployment, run it again after updating `Code.gs`; it adds the new purchase-ledger columns (`status`, `balanceAfter`, `totalPurchasedAfter`) without deleting existing purchase rows. Existing rows with a blank status are treated as already applied.
 7. Enable **Google Play Android Developer API** in the Google Cloud project associated with the service account. In Play Console → Users and permissions, grant the service-account email permission to view financial/order data needed to verify purchases.
 8. Deploy → New deployment → Web app:
    - Execute as: **Me**
