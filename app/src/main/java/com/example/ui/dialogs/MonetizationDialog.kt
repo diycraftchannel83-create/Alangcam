@@ -90,6 +90,17 @@ fun MonetizationDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
+                    text = uiText(
+                        language,
+                        "Punya kode promo 1.000 Credit? Tukarkan melalui Google Play Store dengan akun yang sama, lalu kembali ke aplikasi dan tekan PERBARUI STATUS PEMBELIAN. Kredit akan diverifikasi dan ditambahkan otomatis.",
+                        "Have a 1,000 Credit promo code? Redeem it in Google Play Store using the same account, then return to the app and tap REFRESH PURCHASE STATUS. Credits will be verified and added automatically."
+                    ),
+                    color = NeonGreen,
+                    fontSize = 11.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Text(
                     text = uiText(language, "PAKET KREDIT REKAM", "RECORDING CREDIT PACKAGES"),
                     color = HudWhite,
                     fontSize = 14.sp,
