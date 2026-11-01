@@ -11,6 +11,7 @@ on:
       - feature/gps-speedometer-manual-record
       - feature/firebase-credit-wallet
       - feature/apps-script-credit-backend
+      - feature/apps-script-promo-1000
     paths:
       - '**.gradle'
       - '**.gradle.kts'
