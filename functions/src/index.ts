@@ -14,7 +14,7 @@ const MAX_HEARTBEAT_GAP_SECONDS = 45;
 const MAX_CHARGE_PER_HEARTBEAT_SECONDS = 30;
 
 const PRODUCTS: Record<string, {credits: number; seconds: number}> = {
-  "1._1000_credit": {credits: 1000, seconds: 2 * 60 * 60},
+  "credit_1000": {credits: 1000, seconds: 2 * 60 * 60},
   "2._2000_credit": {credits: 2000, seconds: 4 * 60 * 60},
   "5._5000_credit": {credits: 5000, seconds: 11 * 60 * 60},
 };
@@ -80,10 +80,13 @@ export const verifyCreditPurchase = onCall(
       const purchasedTotal = wallet.exists ? Number(wallet.get("totalPurchasedSeconds") ?? 0) : 0;
       tx.create(tokenRef, {
         uid, productId, purchaseTime: purchase.purchaseTimeMillis ?? null,
+        purchaseType: purchase.purchaseType ?? null,
+        isPromoCode: purchase.purchaseType === 1,
         createdAt: FieldValue.serverTimestamp(),
       });
       tx.create(txRef, {
         uid, type: "purchase", productId,
+        source: purchase.purchaseType === 1 ? "promo" : "google_play",
         credits: packageInfo.credits, creditSeconds: packageInfo.seconds,
         createdAt: FieldValue.serverTimestamp(),
       });
@@ -97,7 +100,68 @@ export const verifyCreditPurchase = onCall(
       return {alreadyProcessed: false, creditSeconds: current + packageInfo.seconds};
     });
 
-    return {...result, creditsAdded: packageInfo.credits, secondsAdded: packageInfo.seconds};
+    return {...result, creditsAdded: packageInfo.credits, secondsAdded: packageInfo.seconds, isPromoCode: purchase.purchaseType === 1};
+  }
+);
+
+/** Verify the permanent Remove Watermark entitlement through Google Play. */
+export const verifyWatermarkPurchase = onCall(
+  {region: FUNCTION_REGION, secrets: [playServiceAccount], timeoutSeconds: 60, maxInstances: 5},
+  async (request) => {
+    const uid = requireUid(request);
+    const productId = String(request.data?.productId ?? "");
+    const purchaseToken = String(request.data?.purchaseToken ?? "");
+    if (productId !== "remove_watermark" || purchaseToken.length < 20) {
+      throw new HttpsError("invalid-argument", "Invalid watermark product or purchase token.");
+    }
+
+    const publisher = await playPublisher();
+    const response = await publisher.purchases.products.get({
+      packageName,
+      productId,
+      token: purchaseToken,
+    });
+    const purchase = response.data;
+    if (purchase.purchaseState !== 0 || purchase.productId !== productId) {
+      throw new HttpsError("failed-precondition", "Watermark purchase is not completed or product does not match.");
+    }
+
+    const tokenHash = hashToken(purchaseToken);
+    const tokenRef = db.collection("purchase_tokens").doc(tokenHash);
+    const walletRef = db.collection("credit_wallets").doc(uid);
+    const transactionRef = db.collection("credit_transactions").doc(tokenHash);
+
+    return db.runTransaction(async (tx) => {
+      const prior = await tx.get(tokenRef);
+      if (prior.exists) {
+        if (prior.get("uid") !== uid || prior.get("productId") !== productId) {
+          throw new HttpsError("already-exists", "Purchase token already belongs to another account.");
+        }
+        const wallet = await tx.get(walletRef);
+        return {premiumOwned: wallet.get("premiumOwned") === true, alreadyProcessed: true};
+      }
+
+      const wallet = await tx.get(walletRef);
+      tx.create(tokenRef, {
+        uid, productId, purchaseTime: purchase.purchaseTimeMillis ?? null,
+        purchaseType: purchase.purchaseType ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      tx.create(transactionRef, {
+        uid, type: "premium_purchase", productId,
+        source: purchase.purchaseType === 1 ? "promo" : "google_play",
+        createdAt: FieldValue.serverTimestamp(),
+      });
+      tx.set(walletRef, {
+        uid,
+        creditSeconds: wallet.exists ? Number(wallet.get("creditSeconds") ?? 0) : 0,
+        totalPurchasedSeconds: wallet.exists ? Number(wallet.get("totalPurchasedSeconds") ?? 0) : 0,
+        totalUsedSeconds: wallet.exists ? Number(wallet.get("totalUsedSeconds") ?? 0) : 0,
+        premiumOwned: true,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, {merge: true});
+      return {premiumOwned: true, alreadyProcessed: false};
+    });
   }
 );
 
