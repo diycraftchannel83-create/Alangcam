@@ -232,7 +232,11 @@ class RiderCamViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun refreshPurchases() {\n        billingManager.refreshPurchases()\n    }\n\n    fun updateBannerForMissingAudioPermission() {
+    fun refreshPurchases() {
+        billingManager.refreshPurchases()
+    }
+
+    fun updateBannerForMissingAudioPermission() {
         _bannerMessage.value = uiText(_language.value, "Izin mikrofon tidak diberikan. Video akan direkam tanpa audio.", "Microphone permission denied. Video will be recorded without audio.")
     }
 
