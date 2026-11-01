@@ -57,9 +57,13 @@ class AppsScriptCreditRepository(
         }
     }
 
-    suspend fun verifyCreditPurchase(productId: String, purchaseToken: String): Map<*, *> =
-        callApi("verifyCreditPurchase", JSONObject()
+    suspend fun verifyCreditPurchase(productId: String, purchaseToken: String): Map<*, *> {
+        val result = callApi("verifyCreditPurchase", JSONObject()
             .put("productId", productId).put("purchaseToken", purchaseToken)).toMap()
+        // The Apps Script + Excel backend remains the source of truth for the wallet.
+        refreshWallet()
+        return result
+    }
 
     suspend fun verifyWatermarkPurchase(productId: String, purchaseToken: String): Boolean {
         val data = callApi("verifyWatermarkPurchase", JSONObject()
